@@ -1,0 +1,20 @@
+{
+  "__type__": "cc.Material",
+  "_name": "liq",
+  "_objFlags": 0,
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "41431f65-e72b-4c68-a049-1553d448d214"
+  },
+  "_techniqueIndex": 0,
+  "_techniqueData": {
+    "0": {
+      "defines": {
+        "USE_TEXTURE": true
+      },
+      "props": {
+        "u_pointSize": 4
+      }
+    }
+  }
+}

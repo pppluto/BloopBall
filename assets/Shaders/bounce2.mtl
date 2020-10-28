@@ -1,0 +1,20 @@
+{
+  "__type__": "cc.Material",
+  "_name": "bounce2",
+  "_objFlags": 0,
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "1a9a9389-2fb0-4948-a95f-70d0828f9b7d"
+  },
+  "_techniqueIndex": 0,
+  "_techniqueData": {
+    "0": {
+      "defines": {
+        "USE_TEXTURE": true
+      },
+      "props": {
+        "speed": 2
+      }
+    }
+  }
+}
