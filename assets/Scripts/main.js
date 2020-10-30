@@ -16,14 +16,19 @@ cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
     // manager.enabledDebugDraw = true;
     // manager.enabledDrawBoundingBox = true;
 
+    // cc.macro.SHOW_MESH_WIREFRAME = true;
+
 });
 
 const MIN_HEIGHT = 100;
 const MAX_HEIGHT = 250;
-export const FINAL_TAG = 99; //终点
-export const DIE_TAG = 88;   //死亡障碍
-export const BUFF_TAG = 77;  //加速
-export const DEBUFF_TAG = 66;//减速
+
+export const TagType = cc.Enum({
+    FINAL_TAG: 99,
+    DIE_TAG: 88,
+    BUFF_TAG: 77,
+    DEBUFF_TAG: 66,
+});
 
 cc.Class({
     extends: cc.Component,
@@ -37,9 +42,13 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        ground: cc.Node,
+        groundMesh: cc.Node,
         mapLength: 4000,
         sf: cc.SpriteFrame,
+
+        //ball prefabs
+        ball1: cc.Prefab,
+        ball2: cc.Prefab,
 
         //barrier prefabs
         airBarrier1: cc.Prefab,
@@ -49,6 +58,16 @@ cc.Class({
         
         //buff prefabs
 
+        //mark prefabs
+        flag: cc.Prefab,
+        //camera
+        playerCamera: cc.Camera,
+        otherCamera: cc.Camera,
+
+        //scene relate
+        gameBoard: cc.Node,
+        gameHint: cc.Label,
+        restartBtn: cc.Node
     },
 
 
@@ -56,27 +75,141 @@ cc.Class({
     onLoad: function () {
         this.hills = [];
         this.pools = [];
+        this.balls = [];
+        this.playerRank = 1;
+        this.playerFinish = false;
         this.initHeight = this.yOffset;
         //mesh点
         this._meshPoints = [];
         //极值点 (用来确定空中障碍位置)
         this._extremePoints = []
         // cc.macro.FIX_ARTIFACTS_BY_STRECHING_TEXEL_TMX = 1;
+        this.gameBoard.active = false;
+        this.groundMesh.zIndex = 100;
 
         this.prepareTerrian();
-        this.prepareBarriers()
+        this.prepareBarriers();
+        this.prepareBalls();
+
+      
+        // return
+        this.scheduleOnce(() => {
+            this.startGame()
+        },3);
     },
+    startGame(){
+        console.log('startgame');
+        this.balls.forEach((b) => {
+            let bControl = b.getComponent('ballControl');
+            bControl.gameMgr = this;
+            bControl.startGame();
+        })
+    },
+    playerWin(isAI){
+        console.log('player win',isAI)
+        if(this.playerFinish) return;
+        if(isAI && !this.playerFinish) {
+            this.playerRank +=1;
+        } else {
+          this.showBoard()
+        }
+    },
+    showBoard(){
+        this.playerFinish = true;
+        this.gameBoard.active = true;
+        this.gameHint.string = `您获得第${this.playerRank}名`;
+    },
+    restart(){
+        cc.director.loadScene('Main');
+    },
+    // useSkill(){
+    //     let player = this.balls[0];
+    //     if(player){
+    //         let bc = player.getComponent('ballControl')
+    //         bc.useSkill();
+    //     }
+    // },
+    useSkill(){
+      
+        let path = 'spines/spider';
+        cc.resources.load(path, sp.SkeletonData,(err,skeData) => {
+            this.createSpNode(skeData);
+        });
+    },
+    createSpNode(skeData){
+      
+        let player = this.balls[0];
+        if(!player) return;
+
+        let spNode = new cc.Node();
+        let skeleton = spNode.addComponent(sp.Skeleton);
+
+        let pos = this.getMaxPosWithXOffset(player.x + 400);
+
+        spNode.setPosition(pos);
+        spNode.group = 'special';
+        let body = spNode.addComponent(cc.RigidBody);
+        body.type = cc.RigidBodyType.Static;
     
+        let collider = spNode.addComponent(cc.PhysicsCircleCollider);
+        collider.radius = 100;
+        collider.sensor = true;
+        collider.tag = TagType.DEBUFF_TAG;
+        this.node.addChild(spNode);
+        skeleton.timeScale = 1;
+        skeleton.skeletonData = skeData;
+        skeleton.animation = 'skill';
+        skeleton.loop = false;
+        skeleton._updateSkeletonData();
+
+        skeleton.setCompleteListener(() => {
+            spNode.parent = null;
+            spNode.destroy()
+        })
+        // setTimeout(() => {
+           
+        // }, 3000);
+    },
+    prepareBalls(){
+        let player_num = 4;
+        let yPosition = 300;
+        let xPosition = 600;
+        // let player = cc.instantiate(this.ball1);
+        // player.setPosition(cc.v2( xPosition,yPosition ));
+        // this.node.addChild(player);
+        // let playerC = this.playerCamera.getComponent('camera-control');
+        // playerC.target = player;
+        // this.balls.push(player);
+
+        for (let index = 0; index < player_num; index++) {
+            let otherPlayer = cc.instantiate(this.ball2);
+            let ball1 = otherPlayer.getComponent('ball1');
+            //先确定位置，不然初始化时，会因为堆在一起产生碰撞效果
+            ball1.initWithPosition(cc.v2( xPosition + (index + 1) * 100, yPosition ));
+            this.node.addChild(otherPlayer);
+            ball1.enableContact = index === 0;
+            ball1.prepare()
+            
+            let bControl = otherPlayer.getComponent('ballControl')
+            bControl.isAI = index !== 0;
+            bControl.AILevel = index;
+            this.balls.push(otherPlayer);
+            bControl.init();
+
+            if(index === 0){
+                let playerC = this.playerCamera.getComponent('camera-control');
+                playerC.target = otherPlayer;
+            }
+        }
+    },
     prepareTerrian(){
-
-        this.creatBoundary(-this.pixelStep);
-
+        //创建地形
         while (this.xOffset < this.mapLength) {
             this.generateTerrian();
         }
 
         this.createFinalTerrian();
-        this.creatBoundary(this.xOffset - 600)
+        this.createEndMark(this.xOffset - 600)
         const texture = this.sf.getTexture();
         texture.update({premultiplyAlpha: true})
 
@@ -108,18 +241,23 @@ cc.Class({
         })
         this.renderMesh(vertices,indices,uvs);
     },
-    creatBoundary(xOffset){
+    createEndMark(positionX){
         let points = [];
-        let yHeight = 600
-        let nextY = 600
+        let yHeight = cc.winSize.height;
         let pixelStep = this.pixelStep;
         points.push( cc.v2( 0,     0) );
         points.push( cc.v2( 0,   yHeight  ));
-        points.push( cc.v2( pixelStep,nextY) );
+        points.push( cc.v2( pixelStep,yHeight) );
         points.push( cc.v2( pixelStep, 0) );
         
+        let flagPosition = this.getMaxPosWithXOffset(positionX);
+
+        let flag = cc.instantiate(this.flag);
+        this.node.addChild(flag);
+        flag.setPosition(flagPosition);
+    
         let node = new cc.Node();
-        node.x = xOffset;
+        node.x = positionX
         node.group = 'ground'
 
         let body = node.addComponent(cc.RigidBody);
@@ -128,7 +266,7 @@ cc.Class({
         let collider = node.addComponent(cc.PhysicsPolygonCollider);
         collider.points = points;
         collider.friction = 0;
-        collider.tag = FINAL_TAG;
+        collider.tag = TagType.FINAL_TAG;
         collider.sensor = true;
 
         node.parent = this.node;
@@ -155,7 +293,7 @@ cc.Class({
         mesh.setIndices(indices);
 
         // let meshRender = this.meshRender;
-        let meshRender = this.ground.getComponent(cc.MeshRenderer);
+        let meshRender = this.groundMesh.getComponent(cc.MeshRenderer);
         let material = meshRender.getMaterial(0);
         // Reset material
         let texture = this.sf.getTexture();
@@ -287,6 +425,12 @@ cc.Class({
         this._extremePoints.push(extremePoint);
     },
 
+    getMaxPosWithXOffset(xOffset){
+        let indexOfFlag = Math.round(xOffset / this.pixelStep);
+        let allTopPoints = this._meshPoints.filter((_,index) => index % 2 !== 0)
+        let pos = allTopPoints[indexOfFlag];
+        return pos
+    },
     //创建障碍物
     prepareBarriers(){
         //应该在所有点中去生成障碍，这里只做demo
@@ -296,7 +440,7 @@ cc.Class({
             if(ePoint.x > this.xOffset - 1000) return;
 
             if(ePoint.y > MIN_HEIGHT) {
-               let tmp = Math.random() > 0.2;
+               let tmp = Math.random() > 0.5;
                if(tmp){
                    this.generateGroundBarrier(ePoint,this._extremePoints[index-1])
                } else {
@@ -322,7 +466,7 @@ cc.Class({
         
         this.node.addChild(barrier);
         let offset = barrier.height/2
-        barrier.setPosition(cc.v2( position.x, position.y+offset-10));
+        barrier.setPosition(cc.v2( position.x, position.y + offset-20 ));
         // barrier.angle  = angle;
 
     }, 

@@ -1,0 +1,17 @@
+{
+  "__type__": "cc.Material",
+  "_name": "flag",
+  "_objFlags": 0,
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "dad5edb0-2f2d-4f5a-830d-1b22f7425fa6"
+  },
+  "_techniqueIndex": 0,
+  "_techniqueData": {
+    "0": {
+      "defines": {
+        "USE_TEXTURE": true
+      }
+    }
+  }
+}

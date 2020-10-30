@@ -2,24 +2,28 @@ var global = require('./global')
 
 const MOVE_LEFT = 1;
 const MOVE_RIGHT = 2;
-var {FINAL_TAG} = require('./infinite-world')
+var {TagType} = require('./main')
 cc.Class({
     extends: cc.Component,
 
     properties: {
-        isAI: false,
-        minXSpeed: 200,
     },
 
-    // use this for initialization
     onLoad: function () {
-
+        //main中控制是否游戏开始
+        this.gameStart = false;
+        this.minXSpeed = 200;
+        this.AILevel = 1;
         this._collideCount = 0;
+       
+        this.moveFlags = 0;
+    },
+
+    init(){
+        console.log('ballcontrol',this.isAI)
         if(this.isAI) {
-            let interval = 2;
+            let interval = 3;
             this.schedule(this.autoJump, interval);
-            this.body = this.getComponent(cc.RigidBody);
-            this.body.linearVelocity = cc.v2(100,0);
             return;
         };
 
@@ -30,37 +34,54 @@ cc.Class({
         canvas.on(cc.Node.EventType.TOUCH_START, this.onTouchStart, this);
         canvas.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
 
-        this.moveFlags = 0;
     },
-
-    start: function () {
+    start () {
         this.body = this.getComponent(cc.RigidBody);
 
         // this.body.applyForceToCenter(cc.v2(100,0),true);
+    },
+    startGame (){
+        this.gameStart = true;
+        let randomY = Math.round(Math.random() * 100);
+        this.applyForce(cc.v2(300,randomY));
+
     },
     disableSchedule(){
         this.unschedule(this.autoJump)
     },
     autoJump() {
-
-        let shouldJump = Math.random() > 0.2;
+        let AILevel = this.AILevel;
+        let random = 1 / AILevel;
+        let shouldJump = Math.random() < random;
         if(shouldJump){
-            this.jump()
+            this.jump();
         }
-
     },
     jump(){
         if(this._finished) return;
+        // if(!this.gameStart) return;
       
-        this.body = this.getComponent(cc.RigidBody);
-        var worldCenter = this.body.getWorldCenter();
-        let localCenter = this.body.getLocalCenter()
-        this.body.applyLinearImpulse(cc.v2(0,300),localCenter,true);
-      
+        // this.body = this.getComponent(cc.RigidBody);
+        // var worldCenter = this.body.getWorldCenter();
+        // let localCenter = this.body.getLocalCenter();
+        // this.body.applyLinearImpulse(cc.v2(0,150),worldCenter,true);
+
+        this.applyForce(cc.v2(0,300));
+
         // let velocity = this.body.linearVelocity;
         // if(velocity.x <= this.minXSpeed){
         //     this.body.linearVelocity = cc.v2(60,velocity.y);
         // }
+    },
+    applyForce(impulse){
+        let ball1 = this.getComponent('ball1');
+
+        let rigidBodies = ball1.spheres;
+        impulse = impulse.div(rigidBodies.length)
+        rigidBodies.forEach(rigid => {
+            var worldCenter = rigid.getWorldCenter();
+            rigid.applyLinearImpulse(impulse,worldCenter,true);
+        });
     },
     onKeyDown (event) {
         switch(event.keyCode) {
@@ -139,27 +160,34 @@ cc.Class({
     },
     onBeginContact: function (contact, selfCollider, otherCollider) {
         //只计算地面，空中平台
-        if(otherCollider.tag === FINAL_TAG){
+        if(otherCollider.tag === TagType.FINAL_TAG){
             this._finished = true;
-            console.log('****',this.isAI ? 'AI finish' :'player finish')
+            console.log('****',this.isAI ? 'AI finish' :'player finish');
+            this.gameMgr.playerWin(this.isAI);
+        }
+
+        if(otherCollider.tag === TagType.DEBUFF_TAG && this.isAI){
+            this.buffState = TagType.DEBUFF_TAG;
         }
     },
 
     // 只在两个碰撞体结束接触时被调用一次
     onEndContact: function (contact, selfCollider, otherCollider) {
         //只计算地面，空中平台
-        if(otherCollider.tag === FINAL_TAG){
+        if(otherCollider.tag === TagType.FINAL_TAG){
             console.log('*************endcontact',this.isAI)
+        }
+        if(otherCollider.tag === TagType.DEBUFF_TAG){
+            this.buffState = null
         }
 
     },
     update: function (dt) {
+        if(!this.gameStart) return;
         // if(!this.isAI) {
         //     return;
         // } 
-        // if (this.moveFlags) {
-        //     this.updateMotorSpeed();
-        // }
+
         let velocity = this.body.linearVelocity;
 
         if(this.node.y > 600){
@@ -170,6 +198,10 @@ cc.Class({
         }
         if(velocity.x <= this.minXSpeed){
             this.body.linearVelocity = cc.v2(this.minXSpeed,velocity.y);
+        }
+
+        if(this.buffState === TagType.DEBUFF_TAG) {
+            this.body.linearVelocity = cc.v2(20,20);
         }
     },
 });

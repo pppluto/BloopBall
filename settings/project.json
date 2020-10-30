@@ -4,7 +4,9 @@
     "ground",
     "ball",
     "background",
-    "block"
+    "block",
+    "toplayer",
+    "special"
   ],
   "collision-matrix": [
     [
@@ -21,6 +23,8 @@
       true,
       true,
       null,
+      true,
+      null,
       true
     ],
     [
@@ -33,6 +37,23 @@
       false,
       false,
       true,
+      false,
+      false
+    ],
+    [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    [
+      false,
+      false,
+      true,
+      false,
+      false,
       false,
       false
     ]

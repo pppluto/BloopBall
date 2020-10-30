@@ -64,7 +64,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        641.777,
+        491.201,
         378.406,
         0,
         0,
@@ -191,43 +191,10 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "3b8fcc57-00d0-4ef3-9eb3-711ee6880035"
     },
-    "fileId": "c7YOaxP/xLErS9q3skvff3",
+    "fileId": "13ayeg7CRPdLlKeQfRU2ic",
     "sync": false
-  },
-  {
-    "__type__": "cc.Graphics",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 1
-    },
-    "_enabled": true,
-    "_materials": [
-      {
-        "__uuid__": "a153945d-2511-4c14-be7b-05d242f47d57"
-      }
-    ],
-    "_lineWidth": 1,
-    "_strokeColor": {
-      "__type__": "cc.Color",
-      "r": 0,
-      "g": 0,
-      "b": 0,
-      "a": 255
-    },
-    "_lineJoin": 2,
-    "_lineCap": 0,
-    "_fillColor": {
-      "__type__": "cc.Color",
-      "r": 255,
-      "g": 255,
-      "b": 255,
-      "a": 255
-    },
-    "_miterLimit": 10,
-    "_id": ""
   },
   {
     "__type__": "4eb9f/xj/1Ie4oZU+lwgtxD",
@@ -237,9 +204,10 @@
       "__id__": 1
     },
     "_enabled": true,
-    "particleNumber": 12,
-    "particleRadius": 20,
+    "particleNumber": 8,
+    "particleRadius": 15,
     "sphereSize": 9,
+    "enableContact": true,
     "_id": ""
   },
   {
@@ -278,7 +246,7 @@
     "tag": 0,
     "_density": 1,
     "_sensor": false,
-    "_friction": 0.2,
+    "_friction": 0,
     "_restitution": 0,
     "body": null,
     "_offset": {
@@ -290,15 +258,48 @@
     "_id": ""
   },
   {
-    "__type__": "09655/MMz1HLqVdisNNarvD",
+    "__type__": "cc.Graphics",
     "_name": "",
     "_objFlags": 0,
     "node": {
       "__id__": 1
     },
     "_enabled": true,
-    "maxSpeed": 1500,
-    "autoRun": false,
+    "_materials": [
+      {
+        "__uuid__": "a153945d-2511-4c14-be7b-05d242f47d57"
+      }
+    ],
+    "_lineWidth": 2,
+    "_strokeColor": {
+      "__type__": "cc.Color",
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 255
+    },
+    "_lineJoin": 2,
+    "_lineCap": 0,
+    "_fillColor": {
+      "__type__": "cc.Color",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "_miterLimit": 10,
+    "_id": ""
+  },
+  {
+    "__type__": "f9f65w9aBZGoKA+Oia4S15Q",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "isAI": false,
+    "minXSpeed": 200,
     "_id": ""
   },
   {
@@ -307,9 +308,9 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "3b8fcc57-00d0-4ef3-9eb3-711ee6880035"
     },
-    "fileId": "61yuaftGZHapbCsxCA3cD9",
+    "fileId": "f2SC6hg6pKloO4Jkeh1JxC",
     "sync": false
   }
 ]

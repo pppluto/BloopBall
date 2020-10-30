@@ -97,22 +97,6 @@ cc.Class({
         return body;
     },
 
-    emitTo (target) {
-        var x = target.x;
-        var y = target.y;
-
-        var selfX = this.node.x;
-        var selfY = this.node.y;
-
-        var distance = Math.sqrt((x-selfX)*(x-selfX) + (y-selfY)*(y-selfY));
-        var velocity = cc.v2(x-selfX, y-selfY);
-        velocity.normalizeSelf();
-        velocity.mulSelf(distance*2);
-
-        this.spheres.forEach(function (sphere) {
-            sphere.linearVelocity = velocity;
-        });
-    },
     // onBeginContact: function (contact, selfCollider, otherCollider) {
     //     //只计算地面，空中平台
     //     this._collideCount +=1;

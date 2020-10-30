@@ -14,28 +14,21 @@ cc.Class({
         enableContact: false,
 
         meshRenderer: cc.MeshRenderer,
-        spriteFrame: cc.SpriteFrame,
+        spriteFrame1: cc.SpriteFrame,
+        spriteFrame2: cc.SpriteFrame,
+      
     },
 
     // use this for initialization
     onLoad(){
         console.log('render');
-        this.init();
-        let spriteFrame = this.spriteFrame;
-        if (spriteFrame) {
-            let newTexture = spriteFrame.getTexture();
-            if (newTexture && newTexture.loaded) {
-                this.onSpriteFrameLoaded();
-            } else {
-                spriteFrame.once('load', this.onSpriteFrameLoaded, this);
-            }
-        }
+        this._initMesh = false;        
     },
-    init: function () {
-
-        let x = this.node.x;
-        let y = this.node.y;
-
+    initWithPosition(position){
+        this.node.x = position.x;
+        this.node.y = position.y;
+    },
+    prepare() {
         let particleNumber = this.particleNumber;
         let particleRadius = this.particleRadius;
         let sphereSize = this.sphereSize;
@@ -59,7 +52,7 @@ cc.Class({
             joint.connectedBody = spheres[0];
             joint.distance = particleRadius;
             joint.dampingRatio = 0.5;
-            joint.frequency = 4;
+            joint.frequency = 10;
 
             if (i > 0) {
                 joint = sphere.node.addComponent(cc.DistanceJoint);
@@ -81,8 +74,20 @@ cc.Class({
         }
 
         this.spheres = spheres;
-        //TODO: 
-        //创建一个sensor collider 来获取碰撞事件，
+        let spriteFrame = this.spriteFrame1;
+        if(this.enableContact) {
+            spriteFrame = this.spriteFrame2
+        }
+        this.bodySpriteFrame = spriteFrame;
+        if (spriteFrame) {
+            let newTexture = spriteFrame.getTexture();
+            if (newTexture && newTexture.loaded) {
+                this.onSpriteFrameLoaded();
+            } else {
+                spriteFrame.once('load', this.onSpriteFrameLoaded, this);
+            }
+        }
+
     },
 
     _createSphere (x, y, r, node) {
@@ -98,7 +103,7 @@ cc.Class({
         let collider = node.addComponent(cc.PhysicsCircleCollider);
         collider.density = 0.2;
         collider.restitution = 0
-        collider.friction = 0.2;
+        collider.friction = 0.5;
         collider.radius = r;
 
         if(this.enableContact){
@@ -107,33 +112,6 @@ cc.Class({
         return body;
     },
 
-    emitTo (target) {
-        var x = target.x;
-        var y = target.y;
-
-        var selfX = this.node.x;
-        var selfY = this.node.y;
-
-        var distance = Math.sqrt((x-selfX)*(x-selfX) + (y-selfY)*(y-selfY));
-        var velocity = cc.v2(x-selfX, y-selfY);
-        velocity.normalizeSelf();
-        velocity.mulSelf(distance*2);
-
-        this.spheres.forEach(function (sphere) {
-            sphere.linearVelocity = velocity;
-        });
-    },
-    // onBeginContact: function (contact, selfCollider, otherCollider) {
-    //     //只计算地面，空中平台
-    //     this._collideCount +=1;
-    // },
-
-    // // 只在两个碰撞体结束接触时被调用一次
-    // onEndContact: function (contact, selfCollider, otherCollider) {
-    //     //只计算地面，空中平台
-
-    //     this._collideCount -=1;
-    // },
     onSpriteFrameLoaded(){
         this.drawMesh();
     },
@@ -155,7 +133,7 @@ cc.Class({
         mesh.setVertices(gfx.ATTR_UV0,uvs);
         mesh.setIndices(indices);
        
-        const texture = this.spriteFrame.getTexture();
+        const texture = this.bodySpriteFrame.getTexture();
         texture.update({premultiplyAlpha: true})
         const material = this.meshRenderer.getMaterial(0);
         material.define("USE_DIFFUSE_TEXTURE", true);
@@ -164,28 +142,51 @@ cc.Class({
         this.meshRenderer.mesh = mesh;
         this._initMesh = true;
     },
+    smoothPoints(points) {
+  
+        let center = points[0];
+        let vertices = [center];
+        // let radians =  Math.PI / this.particleNumber;
+        for (let index = 1; index < points.length; index++) {
+            const position = points[index];
+            // let tmp = cc.v2(position.x,position.y);
+
+            let comparePoint = index === points.length - 1 ? points[1] : points[index+1];
+           
+            let offset = comparePoint.sub(position);
+            // let around = tmp.rotate(radians);
+            // let ratio = comparePoint.mag() > position.mag() ? 1.05 : 0.95;
+            //TODO: ratio 应该要更灵活，不然在某些情况下会部分凸起或者尖锐
+            //TODO: joint 应该要调得迟钝一些
+            let ratio = 1.05;
+            let insertNum = 3;
+            vertices.push(position);
+
+            for (let index = 1; index <= insertNum; index++) {
+                let part = index / (insertNum + 1); 
+                let insertPos = position.add(offset.mul(part)).mul(ratio);
+                vertices.push(insertPos);
+            }
+        }
+        return vertices;
+    },
     updateMeshVertex(){
         if(!this._initMesh) return;
-        var points = this.spheres.map(sphere => {
-            let pos = sphere.node.parent.convertToWorldSpaceAR(sphere.node.position);
-            let localPos = this.meshRenderer.node.convertToNodeSpaceAR(pos);
-            return this.expandPosition( localPos );
-        });
+        var points = this.getRawPoints();
 
         let vertices = points;
+        vertices = this.smoothPoints(points);
+
         this.meshRenderer.mesh.setVertices(gfx.ATTR_POSITION, vertices);
     },
     makeVertex(){
         let vertices = [], uvs = [],indices = [];
 
-        var points = this.spheres.map(sphere => {
-            let pos = sphere.node.parent.convertToWorldSpaceAR(sphere.node.position);
-            let localPos = this.meshRenderer.node.convertToNodeSpaceAR(pos);
-            return this.expandPosition( localPos );
-        });
+        var points = this.getRawPoints();
 
         vertices = points;
         let center =  vertices[0];
+        vertices = this.smoothPoints(points);
         let radius = 20;
         for (let index = 0; index < vertices.length; index++) {
             const vertex = vertices[index];
@@ -212,9 +213,27 @@ cc.Class({
     update (dt) {
         this.updateMeshVertex()
     },
+    getRawPoints(){
+        let center = this.spheres[0];
+        let pos = center.node.parent.convertToWorldSpaceAR(center.node.position);
+        let centerLocalPos = this.meshRenderer.node.convertToNodeSpaceAR(pos);
+        let points = this.spheres.map((sphere,index) => {
+            let pos = sphere.node.parent.convertToWorldSpaceAR(sphere.node.position);
+            let localPos = this.meshRenderer.node.convertToNodeSpaceAR(pos);
 
+            if(index === 0) {
+                return localPos;
+            }
+            let vector = localPos.sub(centerLocalPos).normalize();;
+            let vertex =  localPos.add(vector.mul(this.sphereSize));
+
+            return vertex;
+            return this.expandPosition( localPos );
+        });
+        return points;
+    },
     expandPosition (pos) {
-        return pos.mul(1.4);
+        return pos.mul(1.6);
     }
 });
 
