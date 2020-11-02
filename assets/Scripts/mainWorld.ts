@@ -36,14 +36,14 @@ const {ccclass,property} = cc._decorator
 
 @ccclass
 export default class MainWorld extends cc.Component{
-    @property(Number)
+    @property(cc.Float)
     pixelStep: number = 10
   
     @property(cc.Node)
     target: cc.Node = null
     @property(cc.Node)
     groundMesh: cc.Node = null
-    @property(Number)
+    @property(cc.Float)
     mapLength: number = 4000
     @property(cc.SpriteFrame)
     sf: cc.SpriteFrame = null;

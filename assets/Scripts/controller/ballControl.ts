@@ -1,8 +1,8 @@
-import {Global} from './global'
+import {Global} from '../global'
 const {ccclass, property} = cc._decorator;
 
 
-import {TagType}from './mainWorld'
+import {TagType}from '../mainWorld'
 
 @ccclass
 export default class BallController extends cc.Component{

@@ -10,6 +10,6 @@ export class Global extends cc.Component {
         return this._instance;
     }
 
-    @property(Number)
+    @property(cc.Float)
     _collideCount: number = 0
 }

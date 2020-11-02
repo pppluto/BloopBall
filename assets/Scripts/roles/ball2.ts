@@ -1,5 +1,5 @@
 
-import ColliderListener from '../colliderListener';
+import ColliderListener from '../common/colliderListener';
 
 const { ccclass, property } = cc._decorator;
 
@@ -16,11 +16,11 @@ export default class Ball extends cc.Component {
     @property(cc.SpriteFrame)
     spriteFrame2: cc.SpriteFrame = null;
     
-    @property(Number)
+    @property(cc.Float)
     particleNumber: number = 8
-    @property(Number)
+    @property(cc.Float)
     particleRadius: number = 15
-    @property(Number)
+    @property(cc.Float)
     sphereSize: number = 9
 
     enableContact: boolean = false

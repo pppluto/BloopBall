@@ -1,6 +1,6 @@
 
-import {Global} from './global'
-import {TagType}from './mainWorld'
+import {Global} from '../global'
+import {TagType}from '../mainWorld'
 const { ccclass } = cc._decorator;
 
 @ccclass
