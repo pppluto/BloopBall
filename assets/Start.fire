@@ -174,7 +174,7 @@
       "array": [
         0,
         0,
-        303.96817012596034,
+        412.51225678700956,
         0,
         0,
         0,
@@ -615,7 +615,7 @@
       "__id__": 2
     },
     "component": "",
-    "_componentId": "0c87bBmUk5A/Iqd3Pnsd36g",
+    "_componentId": "75d462l9m9F5pTB1AutTS0p",
     "handler": "startGame",
     "customEventData": ""
   },
@@ -664,13 +664,13 @@
     "_id": "29zXboiXFBKoIV4PQ2liTe"
   },
   {
-    "__type__": "0c87bBmUk5A/Iqd3Pnsd36g",
+    "__type__": "75d462l9m9F5pTB1AutTS0p",
     "_name": "",
     "_objFlags": 0,
     "node": {
       "__id__": 2
     },
     "_enabled": true,
-    "_id": "8flcd1P81NXL4ZySU2u0Nc"
+    "_id": "7fsv890D1Pc7n5XFxCM0He"
   }
 ]

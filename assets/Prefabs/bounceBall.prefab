@@ -197,20 +197,6 @@
     "sync": false
   },
   {
-    "__type__": "4eb9f/xj/1Ie4oZU+lwgtxD",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 1
-    },
-    "_enabled": true,
-    "particleNumber": 8,
-    "particleRadius": 15,
-    "sphereSize": 9,
-    "enableContact": true,
-    "_id": ""
-  },
-  {
     "__type__": "cc.RigidBody",
     "_name": "",
     "_objFlags": 0,
@@ -291,15 +277,23 @@
     "_id": ""
   },
   {
-    "__type__": "f9f65w9aBZGoKA+Oia4S15Q",
+    "__type__": "6ff2d5h8a9KDYpcHnuWlAT2",
     "_name": "",
     "_objFlags": 0,
     "node": {
       "__id__": 1
     },
     "_enabled": true,
-    "isAI": false,
-    "minXSpeed": 200,
+    "_id": ""
+  },
+  {
+    "__type__": "a8b8dG4UV5OBYLHZHk8TqmH",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
     "_id": ""
   },
   {

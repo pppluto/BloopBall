@@ -339,17 +339,23 @@
     "_id": ""
   },
   {
-    "__type__": "54957MmTFRKsLt1UbfWnpC0",
+    "__type__": "6ff2d5h8a9KDYpcHnuWlAT2",
     "_name": "",
     "_objFlags": 0,
     "node": {
       "__id__": 1
     },
     "_enabled": true,
-    "particleNumber": 8,
-    "particleRadius": 15,
-    "sphereSize": 9,
-    "enableContact": false,
+    "_id": ""
+  },
+  {
+    "__type__": "c5586SfVCxOmp43Vy46IEbM",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
     "meshRenderer": {
       "__id__": 6
     },
@@ -359,16 +365,9 @@
     "spriteFrame2": {
       "__uuid__": "bedf4794-369e-44f0-9e7d-c1584cff8a93"
     },
-    "_id": ""
-  },
-  {
-    "__type__": "f9f65w9aBZGoKA+Oia4S15Q",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 1
-    },
-    "_enabled": true,
+    "particleNumber": 8,
+    "particleRadius": 15,
+    "sphereSize": 9,
     "_id": ""
   },
   {

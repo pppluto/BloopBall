@@ -1,21 +1,21 @@
-cc.Class({
-    extends: cc.Component,
 
-    properties: {
-        target: {
-            default: null,
-            type: cc.Node
-        }
-    },
+const { ccclass, property } = cc._decorator;
 
+@ccclass
+export default class CameraController extends cc.Component {
+    @property(cc.Node)
+    target: cc.Node = null;
+    
+    camera: cc.Camera;
+    initY: number = 0;
     // use this for initialization
-    onLoad: function () {
+    onLoad () {
         this.camera = this.getComponent(cc.Camera);
         this.initY = this.node.y;
-    },
+    }
 
     // called every frame, uncomment this function to activate update callback
-    lateUpdate: function (dt) {
+    lateUpdate(dt) {
         if(!this.target) return;
         let ballJS = this.target.getComponent('ballControl');
         if(ballJS._finished){
@@ -30,5 +30,5 @@ cc.Class({
         let zoomRatio = 1 + (0.4 - ratio) * 0.1;
         this.camera.zoomRatio = zoomRatio;
         this.node.y = this.initY + cc.winSize.height/2 * (1-zoomRatio);
-    },
-});
+    }
+}

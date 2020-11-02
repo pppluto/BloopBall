@@ -1,33 +1,40 @@
 
-var smooth = require('../smooth');
-var ColliderListener = require('../colliderListener');
+import ColliderListener from '../colliderListener';
 
-const gfx = cc.gfx;
-cc.Class({
-    extends: cc.Component,
+const { ccclass, property } = cc._decorator;
 
-    properties: {
-        particleNumber: 6,
-        particleRadius: 30,
-        sphereSize: 6,
+const gfx = cc['gfx'];
+@ccclass
+export default class Ball extends cc.Component {
+    
 
-        enableContact: false,
+    @property(cc.MeshRenderer)
+    meshRenderer: cc.MeshRenderer = null;
 
-        meshRenderer: cc.MeshRenderer,
-        spriteFrame1: cc.SpriteFrame,
-        spriteFrame2: cc.SpriteFrame,
-      
-    },
+    @property(cc.SpriteFrame)
+    spriteFrame1: cc.SpriteFrame = null;
+    @property(cc.SpriteFrame)
+    spriteFrame2: cc.SpriteFrame = null;
+    
+    @property(Number)
+    particleNumber: number = 8
+    @property(Number)
+    particleRadius: number = 15
+    @property(Number)
+    sphereSize: number = 9
 
+    enableContact: boolean = false
+    _initMesh: boolean = false;
+    bodySpriteFrame: cc.SpriteFrame = null;
+
+    spheres: Array<any> = []
     // use this for initialization
     onLoad(){
-        console.log('render');
-        this._initMesh = false;        
-    },
+    }
     initWithPosition(position){
         this.node.x = position.x;
         this.node.y = position.y;
-    },
+    }
     prepare() {
         let particleNumber = this.particleNumber;
         let particleRadius = this.particleRadius;
@@ -41,11 +48,12 @@ cc.Class({
         spheres.push(body)
         // spheres.push( this._createSphere(0, 0, sphereSize, this.node) );
 
+        //TODO: joint 应该要调得迟钝一些
         for (let i=0; i<particleNumber; i++) {
             let angle = particleAngle*i;
             let posX = particleRadius * Math.cos(angle);
             let posY = particleRadius * Math.sin(angle);
-            let sphere = this._createSphere(posX, posY, sphereSize);
+            let sphere = this._createSphere(posX, posY, sphereSize,null);
             spheres.push( sphere );
             
             let joint = sphere.node.addComponent(cc.DistanceJoint);
@@ -88,7 +96,7 @@ cc.Class({
             }
         }
 
-    },
+    }
 
     _createSphere (x, y, r, node) {
         if (!node) {
@@ -101,24 +109,24 @@ cc.Class({
         let body = node.addComponent(cc.RigidBody);
         body.enabledContactListener = true;
         let collider = node.addComponent(cc.PhysicsCircleCollider);
-        collider.density = 0.2;
+        collider.density = 0.3;
         collider.restitution = 0
-        collider.friction = 0.5;
+        collider.friction = 0.8;
         collider.radius = r;
 
         if(this.enableContact){
             node.addComponent(ColliderListener);
         }
         return body;
-    },
+    }
 
     onSpriteFrameLoaded(){
-        this.drawMesh();
-    },
+        // this.drawMesh();
+    }
     drawMesh(){
 
-        this.meshRenderer.width = 100;
-        this.meshRenderer.height = 100;
+        this.meshRenderer.node.width = 100;
+        this.meshRenderer.node.height = 100;
 
         let mesh = new cc.Mesh();
         let vfmtColor = new gfx.VertexFormat([
@@ -134,14 +142,14 @@ cc.Class({
         mesh.setIndices(indices);
        
         const texture = this.bodySpriteFrame.getTexture();
-        texture.update({premultiplyAlpha: true})
+
         const material = this.meshRenderer.getMaterial(0);
         material.define("USE_DIFFUSE_TEXTURE", true);
         material.setProperty('diffuseTexture', texture);
 
         this.meshRenderer.mesh = mesh;
         this._initMesh = true;
-    },
+    }
     smoothPoints(points) {
   
         let center = points[0];
@@ -149,15 +157,11 @@ cc.Class({
         // let radians =  Math.PI / this.particleNumber;
         for (let index = 1; index < points.length; index++) {
             const position = points[index];
-            // let tmp = cc.v2(position.x,position.y);
-
             let comparePoint = index === points.length - 1 ? points[1] : points[index+1];
            
             let offset = comparePoint.sub(position);
-            // let around = tmp.rotate(radians);
             // let ratio = comparePoint.mag() > position.mag() ? 1.05 : 0.95;
             //TODO: ratio 应该要更灵活，不然在某些情况下会部分凸起或者尖锐
-            //TODO: joint 应该要调得迟钝一些
             let ratio = 1.05;
             let insertNum = 3;
             vertices.push(position);
@@ -169,7 +173,34 @@ cc.Class({
             }
         }
         return vertices;
-    },
+    }
+    smoothPoints2(points) {
+        //可以根据两向量的长度差，确定插值点大概位置
+        let center = points[0];
+        let vertices = [center];
+        //每一部分的弧度
+        let radians =  Math.PI / this.particleNumber;
+        for (let index = 1; index < points.length; index++) {
+            const position = points[index];
+            let comparePoint = index === points.length - 1 ? points[1] : points[index+1];
+            //长度差            
+            let offsetLen = comparePoint.mag() - position.mag();
+            let vector = position.normalize();
+            //插值弧度
+            let insertNum = 3;
+            radians = radians / (insertNum + 1);
+            vertices.push(position);
+            for (let index = 1; index <= insertNum; index++) {
+                let part = index / (insertNum + 1);
+                //插值向量
+                //FIX:这里插值的东西没意义，点就在两向量连线上
+                let insertPos = position.add(vector.mul(part *　offsetLen));
+                insertPos =cc.v2(position).rotate(radians);
+                vertices.push(insertPos);
+            }
+        }
+        return vertices;
+    }
     updateMeshVertex(){
         if(!this._initMesh) return;
         var points = this.getRawPoints();
@@ -178,7 +209,7 @@ cc.Class({
         vertices = this.smoothPoints(points);
 
         this.meshRenderer.mesh.setVertices(gfx.ATTR_POSITION, vertices);
-    },
+    }
     makeVertex(){
         let vertices = [], uvs = [],indices = [];
 
@@ -208,11 +239,11 @@ cc.Class({
         let obj = {vertices,uvs,indices}
         return obj;
 
-    },
+    }
 
     update (dt) {
         this.updateMeshVertex()
-    },
+    }
     getRawPoints(){
         let center = this.spheres[0];
         let pos = center.node.parent.convertToWorldSpaceAR(center.node.position);
@@ -228,15 +259,7 @@ cc.Class({
             let vertex =  localPos.add(vector.mul(this.sphereSize));
 
             return vertex;
-            return this.expandPosition( localPos );
         });
         return points;
-    },
-    expandPosition (pos) {
-        return pos.mul(1.6);
     }
-});
-
-/**
- * 物理世界和节点世界的坐标转换。
- */
+}

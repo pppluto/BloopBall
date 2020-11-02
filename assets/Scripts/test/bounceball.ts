@@ -1,27 +1,29 @@
 
 var smooth = require('smooth');
-var ColliderListener = require('./colliderListener');
+import ColliderListener = require('../colliderListener');
 
-cc.Class({
-    extends: cc.Component,
+const {ccclass,property} = cc._decorator;
 
-    properties: {
-        particleNumber: 6,
-        particleRadius: 30,
-        sphereSize: 6,
+@ccclass
+export default class BounceBall extends cc.Component{
 
-        enableContact: false,
-    },
+    particleNumber: number = 6
+    particleRadius: number = 30
+    sphereSize: number = 6
 
-    // use this for initialization
+    enableContact: boolean = false
+
+    ctx: cc.Graphics = null
+
+    spheres: Array<cc.RigidBody> = []
     onLoad(){
         this.ctx = this.getComponent(cc.Graphics);
         this.ctx.lineWidth = 6;
         this.ctx.strokeColor = cc.color().fromHEX('#495069');
         this.ctx.fillColor = cc.color().fromHEX('#ffde59');
         this.init();
-    },
-    init: function () {
+    }
+    init () {
 
         let x = this.node.x;
         let y = this.node.y;
@@ -73,9 +75,9 @@ cc.Class({
         this.spheres = spheres;
         //TODO: 
         //创建一个sensor collider 来获取碰撞事件，
-    },
+    }
 
-    _createSphere (x, y, r, node) {
+    _createSphere (x, y, r, node?) {
         if (!node) {
             node = new cc.Node();
             node.x = x;
@@ -95,7 +97,7 @@ cc.Class({
             node.addComponent(ColliderListener);
         }
         return body;
-    },
+    }
 
     // onBeginContact: function (contact, selfCollider, otherCollider) {
     //     //只计算地面，空中平台
@@ -146,8 +148,4 @@ cc.Class({
     expandPosition (pos) {
         return pos.mul(1.3);
     }
-});
-
-/**
- * 物理世界和节点世界的坐标转换。
- */
+}

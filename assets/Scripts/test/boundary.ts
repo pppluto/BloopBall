@@ -1,14 +1,11 @@
+const { ccclass, property } = cc._decorator;
 
-cc.Class({
-    extends: cc.Component,
-
-    properties: {
-        size: cc.size(0, 0),
-        mouseJoint: true
-    },
-
-    // use this for initialization
-    onLoad: function () {
+const CollisionMatrix = cc.game['collisionMatrix'];
+@ccclass
+export default class Boundary extends cc.Component {
+    size: cc.Size = cc.size(0, 0);
+    mouseJoint: boolean = true
+    onLoad () {
         let width   = this.size.width || this.node.width;
         let height  = this.size.height || this.node.height;
 
@@ -33,10 +30,10 @@ cc.Class({
 
         node.parent = this.node;
 
-        let matrix = cc.game.collisionMatrix[node.groupIndex];
+        let matrix = CollisionMatrix[node.groupIndex];
         var categoryBits = 1 << node.groupIndex;
         var maskBits = 0;
-        var bits = cc.game.collisionMatrix[node.groupIndex];
+        var bits = CollisionMatrix[node.groupIndex];
         for (let i = 0; i < bits.length; i++) {
             if (!bits[i]) continue;
             maskBits |= 1 << i;
@@ -48,7 +45,7 @@ cc.Class({
             groupIndex: 0
         };
         console.log('martrix',matrix,filter)
-    },
+    }
     _addBound (node, x, y, width, height) {
         let collider = node.addComponent(cc.PhysicsBoxCollider);
         collider.offset.x = x;
@@ -57,4 +54,4 @@ cc.Class({
         collider.size.height = height;
         return collider
     }
-});
+}
