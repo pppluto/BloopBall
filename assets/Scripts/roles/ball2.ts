@@ -23,6 +23,9 @@ export default class Ball extends cc.Component {
     @property(cc.Float)
     sphereSize: number = 9
 
+    @property(cc.Node)
+    beautyNode: cc.Node = null;
+
     enableContact: boolean = false
     _initMesh: boolean = false;
     bodySpriteFrame: cc.SpriteFrame = null;
@@ -60,7 +63,7 @@ export default class Ball extends cc.Component {
             joint.connectedBody = spheres[0];
             joint.distance = particleRadius;
             joint.dampingRatio = 0.5;
-            joint.frequency = 10;
+            joint.frequency = 4;
 
             if (i > 0) {
                 joint = sphere.node.addComponent(cc.DistanceJoint);
@@ -96,8 +99,39 @@ export default class Ball extends cc.Component {
             }
         }
 
+        this.beautify();
     }
+    beautify(){
+        let group = '_2'
+        let paths = ['eye','tail','hair'].map(e => 'bodypart/' + e + group);
+        cc.resources.load(paths, cc.SpriteFrame,(err,sprites) => {
+           console.log('sprites',sprites);
+           this.createBeautifyNode(sprites);
+        });
+    }
+    createBeautifyNode(sprites){
+        if(!this.beautyNode) {
+           this.beautyNode = new cc.Node();
+           this.beautyNode.parent = this.node;
+           this.beautyNode.position = cc.v3(0,0,0)            
+        }
 
+        let posEye = cc.v3(0,this.sphereSize,0);
+        let edge = this.sphereSize + this.particleRadius;
+        let posTail = cc.v3(edge,20,0).mul(-1);
+        let posHair = cc.v3(0,edge,0);
+        let pos = [posEye,posTail,posHair];
+        sprites.forEach((element,index) => {
+            let spNode = new cc.Node();
+            let sp = spNode.addComponent(cc.Sprite)
+            sp.spriteFrame = element;
+            spNode.scale = 0.5;
+            spNode.position = pos[index];
+            spNode.parent = this.beautyNode;
+        });
+        
+
+    }
     _createSphere (x, y, r, node) {
         if (!node) {
             node = new cc.Node();
@@ -121,12 +155,12 @@ export default class Ball extends cc.Component {
     }
 
     onSpriteFrameLoaded(){
-        // this.drawMesh();
+        this.drawMesh();
     }
     drawMesh(){
 
-        this.meshRenderer.node.width = 100;
-        this.meshRenderer.node.height = 100;
+        this.meshRenderer.node.width = 256;
+        this.meshRenderer.node.height = 256;
 
         let mesh = new cc.Mesh();
         let vfmtColor = new gfx.VertexFormat([
@@ -218,7 +252,8 @@ export default class Ball extends cc.Component {
         vertices = points;
         let center =  vertices[0];
         vertices = this.smoothPoints(points);
-        let radius = 20;
+        //这个半径点
+        let radius = this.sphereSize + this.particleRadius;
         for (let index = 0; index < vertices.length; index++) {
             const vertex = vertices[index];
             let uvX = (vertex.x - center.x) / radius / 2 + 0.5;
@@ -240,9 +275,24 @@ export default class Ball extends cc.Component {
         return obj;
 
     }
+    followRotate(){
+        let center = this.spheres[0]
+        let pos = center.node.parent.convertToWorldSpaceAR(center.node.position);
+        let centerLocalPos = this.meshRenderer.node.convertToNodeSpaceAR(pos);
+        let first = this.spheres[1];
+        let pos2 = first.node.parent.convertToWorldSpaceAR(first.node.position);
+        let localPos = this.meshRenderer.node.convertToNodeSpaceAR(pos2);
+        let vector = localPos.sub(centerLocalPos);
 
+        let vec = vector.y < 0 ? -1:1
+        let angle = vec *　cc.Vec2.angle(vector,cc.v2(1,0)) * 180 / Math.PI ;
+        if(this.beautyNode){
+            this.beautyNode.angle = angle;
+        }
+    }
     update (dt) {
-        this.updateMeshVertex()
+        this.updateMeshVertex();
+        this.followRotate();
     }
     getRawPoints(){
         let center = this.spheres[0];

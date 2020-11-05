@@ -1,11 +1,12 @@
 // http://www.emanueleferonato.com/2011/10/04/create-a-terrain-like-the-one-in-tiny-wings-with-flash-and-box2d-%E2%80%93-adding-more-bumps/
+import SkillHost from './roles/skillHost'
 
 cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
     let physicsManager = cc.director.getPhysicsManager();
     physicsManager.enabled = true;
     
     physicsManager.debugDrawFlags = 
-        // 0;
+        0;
         // cc.PhysicsManager.DrawBits.e_aabbBit |
         cc.PhysicsManager.DrawBits.e_jointBit |
         cc.PhysicsManager.DrawBits.e_shapeBit
@@ -30,6 +31,7 @@ export const TagType = cc.Enum({
     DEBUFF_TAG: 66,
     GROUND_TAG: 55,
     BLOCK_TAG: 44,
+    DEFAULT: 0
 });
 
 const {ccclass,property} = cc._decorator
@@ -43,10 +45,14 @@ export default class MainWorld extends cc.Component{
     target: cc.Node = null
     @property(cc.Node)
     groundMesh: cc.Node = null
+    @property(cc.Node)
+    surfaceMesh: cc.Node = null
     @property(cc.Float)
     mapLength: number = 4000
     @property(cc.SpriteFrame)
     sf: cc.SpriteFrame = null;
+    @property(cc.SpriteFrame)
+    surfaceSf: cc.SpriteFrame = null;
     //ball prefabs
     // @property(cc.Prefab)
     // ball1: cc.Prefab = null
@@ -107,7 +113,9 @@ export default class MainWorld extends cc.Component{
         cc.systemEvent.on(cc.SystemEvent.EventType['TOUCH_START'], this.onTouchStart, this);
         // return
         this.scheduleOnce(() => {
-            this.startGame()
+            this.startGame();
+            const phyMgr = cc.director.getPhysicsManager();
+            phyMgr.gravity = cc.v2(2 * 32,-10 * 32);
         },3);
     }
     onKeyDown (event) {
@@ -161,53 +169,16 @@ export default class MainWorld extends cc.Component{
     //         bc.useSkill();
     //     }
     // },
-    useSkill(){
-        let path = 'spines/spider';
-        cc.resources.load(path, sp.SkeletonData,(err,skeData) => {
-            this.createSpNode(skeData);
-        });
+    autoUseSkill(){
+        let otherPlayers = this.balls.slice(1);
     }
-    createSpNode(skeData){
-      
+    useSkill(){
         let player = this.balls[0];
         if(!player) return;
 
-        let spNode = new cc.Node();
-        spNode.zIndex = 101;
-        let skeleton = spNode.addComponent(sp.Skeleton);
-
-        let pos = this.getMaxPosWithXOffset(player.x + 100);
-        pos.y = player.y;
-        spNode.setPosition(pos);
-        spNode.group = 'special';
-        let body = spNode.addComponent(cc.RigidBody);
-        body.type = cc.RigidBodyType.Static;
-    
-        let collider = spNode.addComponent(cc.PhysicsCircleCollider);
-        collider.radius = 100;
-        collider.sensor = true;
-        collider.tag = TagType.DEBUFF_TAG;
-        collider.enabled = false;
-        this.node.addChild(spNode);
-        skeleton.timeScale = 1;
-        skeleton.skeletonData = skeData;
-        skeleton.animation = 'ready';
-        skeleton.loop = false;
-        // skeleton._updateSkeletonData();
-
-        skeleton.setCompleteListener(() => {
-            if(skeleton.animation === 'ready') {
-                collider.enabled = true;
-                skeleton.setAnimation(0,'skill',false);
-                spNode.setPosition(pos.x + 100,pos.y);
-            } else {
-                spNode.parent = null;
-                spNode.destroy()
-            }
-        })
-        // setTimeout(() => {
-           
-        // }, 3000);
+        let host = player.getComponent(SkillHost);
+        if(!host) return;
+        host.useSkill(player);
     }
     prepareBalls(){
         let player_num = 4;
@@ -223,6 +194,7 @@ export default class MainWorld extends cc.Component{
             ball.prepare()
             
             let bControl = otherPlayer.getComponent('ballControl')
+            bControl.gameMgr = this;
             bControl.isAI = index !== 0;
             bControl.AILevel = index;
             this.balls.push(otherPlayer);
@@ -231,6 +203,8 @@ export default class MainWorld extends cc.Component{
             if(index === 0){
                 let playerC = this.playerCamera.getComponent('camera-control');
                 playerC.target = otherPlayer;
+                let host = otherPlayer.addComponent(SkillHost);
+                host.skillConfig = {name:'spider',spinePath:'spines/spider'}
             }
         }
     }
@@ -241,7 +215,9 @@ export default class MainWorld extends cc.Component{
         }
 
         this.createFinalTerrian();
-        this.createEndMark(this.xOffset - 600)
+        this.createLeftBoundary();
+        let offset = cc.winSize.width / 2 +  100;
+        this.createEndMark(this.xOffset - offset)
         const texture = this.sf.getTexture();
         // texture.update({premultiplyAlpha: true})
 
@@ -270,10 +246,37 @@ export default class MainWorld extends cc.Component{
           
             let uvy = isTop ?  1-Math.ceil(v.y) % texHeight/texHeight : 1;
             return cc.v2(uvx,uvy);
-        })
+        });
         this.renderMesh(vertices,indices,uvs);
+        this.renderSurface()
+    }
+    createLeftBoundary(){
+        let positionX = 20;
+        let node = new cc.Node();
+        node.x = positionX
+        node.group = 'ground'
+        this.addCollider(node)
+        node.parent = this.node;
     }
     createEndMark(positionX){
+        let flagPosition = this.getMaxPosWithXOffset(positionX);
+        let flag = cc.instantiate(this.flag);
+        this.node.addChild(flag);
+        flag.setPosition(flagPosition);
+       
+        let node = new cc.Node();
+        node.x = positionX
+        node.group = 'ground'
+        this.addCollider(node, TagType.FINAL_TAG)
+        node.parent = this.node;  
+    }
+    createFinalTerrian(){
+        //平缓坡度
+        this.generateTerrian();
+        //延长水平面
+        this.generateTerrian();
+    }
+    addCollider(node,tag?) {
         let points = [];
         let yHeight = cc.winSize.height;
         let pixelStep = this.pixelStep;
@@ -281,37 +284,80 @@ export default class MainWorld extends cc.Component{
         points.push( cc.v2( 0,   yHeight  ));
         points.push( cc.v2( pixelStep,yHeight) );
         points.push( cc.v2( pixelStep, 0) );
-        
-        let flagPosition = this.getMaxPosWithXOffset(positionX);
-
-        let flag = cc.instantiate(this.flag);
-        this.node.addChild(flag);
-        flag.setPosition(flagPosition);
-    
-        let node = new cc.Node();
-        node.x = positionX
-        node.group = 'ground'
-
         let body = node.addComponent(cc.RigidBody);
         body.type = cc.RigidBodyType.Static;
 
         let collider = node.addComponent(cc.PhysicsPolygonCollider);
         collider.points = points;
         collider.friction = 0;
-        collider.tag = TagType.FINAL_TAG;
-        collider.sensor = true;
+        collider.sensor = tag ? true : false;
+        if(tag) collider.tag = tag;
 
-        node.parent = this.node;
+    }
+    renderSurface(){
+        let vertices = this._meshPoints; 
+        let indices = []; //
+        let texture = this.surfaceSf.getTexture();
+        let surfaceH = 20;
+        vertices = vertices.map((v,k) => {
+            if(k % 2===0) {
+                return vertices[k+1].sub(cc.v2(0,surfaceH))
+            } else {
+                return v;
+            }
+        })
+
+        let lens = vertices.length / 2 - 1; 
+        for (let index = 0; index < lens; index++) {
+           
+            let a1 = index*2
+            let b1 = index*2 + 1;
+            let a2 = index*2 + 2;
+            let b2 = index*2 + 3;
+            indices = indices.concat([a1,b1,a2,b1,a2,b2]);
+        }
+        let uvs = this._meshPoints.map((v,index) => {
+            let isTop = index % 2 !== 0;
+            let uvy = isTop ? 0 : 1;
+            return cc.v2(0,uvy);
+        });
+        // 246,231,76      228,161,46
+        // 效果图的渐变只在边缘，还有持续高亮部分，下面种达不到效果
+        let colors = this._meshPoints.map((_,index) => {
+            let isTop = index % 2 !== 0;
+
+            let topColor = cc.color(246,231,76,255)
+            let bottomColor = cc.color(228,161,46,255)
+            let color = isTop ? topColor : bottomColor
+            return color;
+        });
+        const gfx = cc['gfx'];
+
+        let mesh = new cc.Mesh();
+        let vfmtColor = new gfx.VertexFormat([
+            { name: gfx.ATTR_POSITION, type: gfx.ATTR_TYPE_FLOAT32, num: 2 },
+            { name: gfx.ATTR_UV0, type: gfx.ATTR_TYPE_FLOAT32, num: 2 },
+            // { name: gfx.ATTR_COLOR, type: gfx.ATTR_TYPE_UINT8, num: 4, normalize: true },  
+        ]);
+        mesh.init(vfmtColor,8,false);
+    
+        mesh.setVertices(gfx.ATTR_POSITION,vertices);
+        mesh.setVertices(gfx.ATTR_UV0,uvs);
+        // mesh.setVertices(gfx.ATTR_COLOR,colors);
+        mesh.setIndices(indices);
+
+        // let meshRender = this.meshRender;
+        let meshRender = this.surfaceMesh.getComponent(cc.MeshRenderer);
+        let material = meshRender.getMaterial(0);
+        // Reset material
+        material.define("USE_DIFFUSE_TEXTURE", true);
+        material.setProperty('diffuseTexture', texture);
+
+        meshRender.mesh = mesh;
         
     }
-    createFinalTerrian(){
-        //平缓坡度
-        this.generateTerrian();
-        //延长水平面
-        this.generateTerrian(true);
-    }
     renderMesh(vertices,indices,uvs){
-        const gfx = cc.gfx;
+        const gfx = cc['gfx'];
 
         let mesh = new cc.Mesh();
         let vfmtColor = new gfx.VertexFormat([
@@ -331,6 +377,11 @@ export default class MainWorld extends cc.Component{
         let texture = this.sf.getTexture();
         material.define("USE_DIFFUSE_TEXTURE", true);
         material.setProperty('diffuseTexture', texture);
+
+        // custom shader
+        // material.define("USE_TEXTURE", true);
+        // material.setProperty('texture', texture);
+
         meshRender.mesh = mesh;
     }
     generateTerrianPiece (xOffset, points) {
@@ -496,7 +547,7 @@ export default class MainWorld extends cc.Component{
         let collider = barrier.getComponent(cc.PhysicsPolygonCollider);
         collider.tag = TagType.BLOCK_TAG;
 
-        let randomH = Math.round(Math.random() * 100) + 100;
+        let randomH = Math.round(Math.random() * 50) + 200;
         this.node.addChild(barrier);
         barrier.setPosition(cc.v2( position.x, position.y+randomH))
     }

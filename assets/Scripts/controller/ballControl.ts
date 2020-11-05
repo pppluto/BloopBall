@@ -1,26 +1,24 @@
 import {Global} from '../global'
+import MainWorld,{TagType}from '../mainWorld'
 const {ccclass, property} = cc._decorator;
-
-
-import {TagType}from '../mainWorld'
 
 @ccclass
 export default class BallController extends cc.Component{
 
-    buffState: string = '';
+    buffState: number = TagType.DEFAULT;
     gameStart: boolean = false;
-    minXSpeed: number = 200;
+    minXSpeed: number = 150;
     AILevel: number = 1;
     prePressTS: number = 1;
     isAI: boolean = false;
     _finished: boolean = false;
     body: cc.RigidBody = null;
-    gameMgr: {};
+    gameMgr: MainWorld = null;
     onLoad() {
         //main中控制是否游戏开始
-        this.gameStart = false;
-        this.minXSpeed = 200;
-        this.AILevel = 1;
+        // this.gameStart = false;
+        // this.minXSpeed = 200;
+        // this.AILevel = 1;
 
     }
 
@@ -61,10 +59,12 @@ export default class BallController extends cc.Component{
         let ball2 = this.getComponent('ball2');
 
         let rigidBodies = ball2.spheres;
+        impulse = impulse.mul(4)
         impulse = impulse.div(rigidBodies.length)
         rigidBodies.forEach(rigid => {
             var worldCenter = rigid.getWorldCenter();
             rigid.applyLinearImpulse(impulse,worldCenter,true);
+            // rigid.applyAngularImpulse(-2000)
             // rigid.applyTorque(-1000)
         });
     }
