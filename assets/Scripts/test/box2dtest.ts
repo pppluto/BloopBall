@@ -19,16 +19,19 @@ export default class LiquidBox2dTest extends cc.Component {
     
     @property(cc.Graphics)
     graphics: cc.Graphics = null;
-
+    @property(cc.Node)
+    testNode: cc.Node = null;
+    
     onLoad() {
         const phyMgr = cc.director.getPhysicsManager();
         phyMgr.enabled = true;
         phyMgr.debugDrawFlags = 
-        // 0;
+        0;
         cc.PhysicsManager.DrawBits.e_aabbBit |
         cc.PhysicsManager.DrawBits.e_jointBit |
         cc.PhysicsManager.DrawBits.e_shapeBit
         ;
+        return;
         let spriteFrame = this.spriteFrame;
         if (spriteFrame) {
             let newTexture = spriteFrame.getTexture();
@@ -44,6 +47,23 @@ export default class LiquidBox2dTest extends cc.Component {
         this.draw();
         this.test();
         this.debugInfo();
+    }
+    start(){
+        setInterval(() => {
+            let body = this.testNode.getComponent(cc.RigidBody);
+            let center = body.getWorldCenter();
+            let rotate = body.getWorldRotation();
+            let mass = body.getMass()
+            console.log('rotate',mass)
+            rotate =( rotate % 360) * Math.PI / 180 ;
+            let vec = cc.v2(0,1).rotate(rotate).mul(100000)
+            vec = cc.v2(0,100000)
+            body.applyForce(vec,center,true);
+        },2000)
+    }
+    applyForce(){
+        let body = this.testNode.getComponent(cc.RigidBody);
+        body.applyTorque(-2000,true);
     }
     debugInfo() {
         const phyMgr = cc.director.getPhysicsManager();
@@ -275,6 +295,7 @@ export default class LiquidBox2dTest extends cc.Component {
     }
     update(){
         // this.debugInfo();
+        this.applyForce()
     }
     onSpriteFrameLoaded() {
 

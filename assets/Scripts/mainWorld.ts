@@ -58,6 +58,8 @@ export default class MainWorld extends cc.Component{
     // ball1: cc.Prefab = null
     @property(cc.Prefab)
     ball2: cc.Prefab = null
+    @property(cc.Prefab)
+    motorBall: cc.Prefab = null
 
     //barrier prefabs
     @property(cc.Prefab)
@@ -103,6 +105,7 @@ export default class MainWorld extends cc.Component{
     onLoad () {
         this.gameBoard.active = false;
         this.groundMesh.zIndex = 100;
+        this.surfaceMesh.zIndex = 101;
 
         this.prepareTerrian();
         this.prepareBarriers();
@@ -185,8 +188,8 @@ export default class MainWorld extends cc.Component{
         let yPosition = 300;
         let xPosition = 400;
         for (let index = 0; index < player_num; index++) {
-            let otherPlayer = cc.instantiate(this.ball2);
-            let ball = otherPlayer.getComponent('ball2');
+            let otherPlayer = cc.instantiate(this.motorBall);
+            let ball = otherPlayer.getComponent('motorBall');
             //先确定位置，不然初始化时，会因为堆在一起产生碰撞效果
             ball.initWithPosition(cc.v2( xPosition + (index + 1) * 100, yPosition ));
             this.node.addChild(otherPlayer);
@@ -243,8 +246,8 @@ export default class MainWorld extends cc.Component{
             let reverse = Math.floor(width/texWidth) %2 !==0;
             let mod = width % texWidth;
             let uvx = reverse ? 1 - mod / texWidth : mod/texWidth;
-          
-            let uvy = isTop ?  1-Math.ceil(v.y) % texHeight/texHeight : 1;
+            let ry = (Math.ceil(v.y) )/texHeight;
+            let uvy = isTop ?  1 - ry : 1;
             return cc.v2(uvx,uvy);
         });
         this.renderMesh(vertices,indices,uvs);
@@ -375,12 +378,12 @@ export default class MainWorld extends cc.Component{
         let material = meshRender.getMaterial(0);
         // Reset material
         let texture = this.sf.getTexture();
-        material.define("USE_DIFFUSE_TEXTURE", true);
-        material.setProperty('diffuseTexture', texture);
+        // material.define("USE_DIFFUSE_TEXTURE", true);
+        // material.setProperty('diffuseTexture', texture);
 
         // custom shader
-        // material.define("USE_TEXTURE", true);
-        // material.setProperty('texture', texture);
+        material.define("USE_TEXTURE", true);
+        material.setProperty('texture', texture);
 
         meshRender.mesh = mesh;
     }

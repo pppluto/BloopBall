@@ -35,11 +35,11 @@ CCProgram vs %{
   void main () {
     vec4 pos = vec4(a_position, 1);
 
-    #if CC_USE_MODEL
+    // #if CC_USE_MODEL
     pos = cc_matViewProj * cc_matWorld * pos;
-    #else
-    pos = cc_matViewProj * pos;
-    #endif
+    // #else
+    // pos = cc_matViewProj * pos;
+    // #endif
 
     #if USE_TEXTURE
     v_uv0 = a_uv0;
@@ -78,10 +78,6 @@ CCProgram fs %{
    
     gl_FragColor = o;
 
-    // if(o.a < 0.5) {
-    //   gl_FragColor = v_color;
-    // } else {
-    //   gl_FragColor = o;
-    // }
+  
   }
 }%

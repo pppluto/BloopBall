@@ -32,13 +32,28 @@ export default class BallController extends cc.Component{
 
     }
     start () {
-        this.body = this.getComponent(cc.RigidBody);
+        let motorBall = this.getComponent('motorBall');
+        this.body = motorBall.spheres[0];
     }
     startGame (){
         this.gameStart = true;
         let randomY = Math.round(Math.random() * 100);
-        this.applyForce(cc.v2(300,randomY));
+        // this.applyForce(cc.v2(300,randomY));
+        let rigid = this.body;
+        let center = rigid.getWorldCenter()
+        rigid.applyLinearImpulse(cc.v2(2000,randomY),center,true);
 
+    }
+    jump(){
+        let body = this.body;
+        let center = body.getWorldCenter();
+        let mass = body.getMass()
+        let vec = cc.v2(0,100000)
+        body.applyForce(vec,center,true);
+    }
+    applyForce(){
+        let body = this.body;
+        body.applyTorque(-300,true);
     }
     disableSchedule(){
         this.unschedule(this.autoJump)
@@ -51,23 +66,23 @@ export default class BallController extends cc.Component{
             this.jump();
         }
     }
-    jump(){
-        if(this._finished) return;
-        this.applyForce(cc.v2(0,300));
-    }
-    applyForce(impulse){
-        let ball2 = this.getComponent('ball2');
+    // jump(){
+    //     if(this._finished) return;
+    //     this.applyForce(cc.v2(0,300));
+    // }
+    // applyForce(impulse){
+    //     let ball2 = this.getComponent('ball2');
 
-        let rigidBodies = ball2.spheres;
-        impulse = impulse.mul(4)
-        impulse = impulse.div(rigidBodies.length)
-        rigidBodies.forEach(rigid => {
-            var worldCenter = rigid.getWorldCenter();
-            rigid.applyLinearImpulse(impulse,worldCenter,true);
-            // rigid.applyAngularImpulse(-2000)
-            // rigid.applyTorque(-1000)
-        });
-    }
+    //     let rigidBodies = ball2.spheres;
+    //     impulse = impulse.mul(4)
+    //     impulse = impulse.div(rigidBodies.length)
+    //     rigidBodies.forEach(rigid => {
+    //         var worldCenter = rigid.getWorldCenter();
+    //         rigid.applyLinearImpulse(impulse,worldCenter,true);
+    //         // rigid.applyAngularImpulse(-2000)
+    //         // rigid.applyTorque(-1000)
+    //     });
+    // }
 
     onUpPress(){
         let now = new Date().getTime();
@@ -89,14 +104,17 @@ export default class BallController extends cc.Component{
     onBeginContact (contact, selfCollider, otherCollider) {
         //只计算地面，空中平台
         if(otherCollider.tag === TagType.FINAL_TAG){
-            this._finished = true;
             console.log('****',this.isAI ? 'AI finish' :'player finish');
-            this.gameMgr.playerWin(this.isAI);
+            this.winGame()
         }
 
         if(otherCollider.tag === TagType.DEBUFF_TAG && this.isAI){
             this.buffState = TagType.DEBUFF_TAG;
         }
+    }
+    winGame(){
+        this._finished = true;
+        this.gameMgr.playerWin(this.isAI);
     }
     // 只在两个碰撞体结束接触时被调用一次
     onEndContact (contact, selfCollider, otherCollider) {
@@ -110,6 +128,8 @@ export default class BallController extends cc.Component{
 
     }
     update (dt) {
+        this.applyForce();
+        return;
         if(!this.gameStart) return;
         // if(!this.isAI) {
         //     return;

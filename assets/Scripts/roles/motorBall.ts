@@ -3,6 +3,11 @@ import ColliderListener from '../common/colliderListener';
 
 const { ccclass, property } = cc._decorator;
 
+const getThirdEdge  = (a,b,a2b) => {
+    let tmp = a * a + b * b - 2*a*b*Math.cos(a2b);
+    return Math.sqrt(tmp);
+}
+
 const gfx = cc['gfx'];
 @ccclass
 export default class Ball extends cc.Component {
@@ -12,18 +17,18 @@ export default class Ball extends cc.Component {
     meshRenderer: cc.MeshRenderer = null;
 
     @property(cc.SpriteFrame)
-    spriteFrame1: cc.SpriteFrame = null;
-    @property(cc.SpriteFrame)
-    spriteFrame2: cc.SpriteFrame = null;
+    spriteFrame: cc.SpriteFrame = null;
     
-    @property(cc.Float)
-    particleNumber: number = 8
-    @property(cc.Float)
-    particleRadius: number = 15
-    @property(cc.Float)
-    sphereSize: number = 9
+    particleNumber: number = 16  //最好是偶数，保证落地时不会摇晃
+    motorOffset: number = 28
+    sphereSize: number = 8
 
-    @property(cc.Node)
+    // particleNumber: number = 6  //最好是偶数，保证落地时不会摇晃
+    // motorOffset: number = 40
+    // sphereSize: number = 20
+
+    centerSize: number = 20
+
     beautyNode: cc.Node = null;
 
     enableContact: boolean = false
@@ -33,6 +38,7 @@ export default class Ball extends cc.Component {
     spheres: Array<any> = []
     // use this for initialization
     onLoad(){
+        // this.prepare()
     }
     initWithPosition(position){
         this.node.x = position.x;
@@ -40,55 +46,63 @@ export default class Ball extends cc.Component {
     }
     prepare() {
         let particleNumber = this.particleNumber;
-        let particleRadius = this.particleRadius;
+        let motorOffset = this.motorOffset;
         let sphereSize = this.sphereSize;
 
         let particleAngle = (2*Math.PI)/particleNumber;
-        let particleDistance = Math.sin(particleAngle) * particleRadius * Math.sin((Math.PI - particleAngle)/2);
+        let particleDistance =  Math.sin(particleAngle) * motorOffset * Math.sin((Math.PI - particleAngle)/2);
 
         let spheres = [];
-        let body = this.getComponent(cc.RigidBody);
-        spheres.push(body)
-        // spheres.push( this._createSphere(0, 0, sphereSize, this.node) );
+        let body =  this._createSphere(0, 0, this.centerSize,null);
+        body.node.parent = this.node;
+        spheres.push(body);
 
-        //TODO: joint 应该要调得迟钝一些
+        let aroundDistance = getThirdEdge(sphereSize,this.centerSize,particleAngle);
+
         for (let i=0; i<particleNumber; i++) {
+            //
             let angle = particleAngle*i;
-            let posX = particleRadius * Math.cos(angle);
-            let posY = particleRadius * Math.sin(angle);
+            let posX = motorOffset * Math.cos(angle);
+            let posY = motorOffset * Math.sin(angle);
             let sphere = this._createSphere(posX, posY, sphereSize,null);
             spheres.push( sphere );
-            
+          
+            let motorOffsetVec = cc.v2(-posX,-posY);
+
             let joint = sphere.node.addComponent(cc.DistanceJoint);
-            joint.connectedBody = spheres[0];
-            joint.distance = particleRadius;
-            joint.dampingRatio = 0.5;
-            joint.frequency = 4;
-
-            if (i > 0) {
-                joint = sphere.node.addComponent(cc.DistanceJoint);
-                joint.connectedBody = spheres[spheres.length - 2];
-                joint.distance = particleDistance;
-                joint.dampingRatio = 1;
-                joint.frequency = 0;
-            }
-
-            if (i === particleNumber - 1) {
-                joint = spheres[1].node.addComponent(cc.DistanceJoint);
-                joint.connectedBody = sphere;
-                joint.distance = particleDistance;
-                joint.dampingRatio = 1;
-                joint.frequency = 0;
-            }
+            joint.distance = aroundDistance;
+            joint.dampingRatio = 1;
+            joint.frequency = 1;
+            
+            let motorJoint = sphere.node.addComponent(cc.MotorJoint);
+            motorJoint.linearOffset  = motorOffsetVec;
+            motorJoint.maxForce = 300
+            motorJoint.maxTorque = 300
+            motorJoint.connectedBody = spheres[0];
 
             sphere.node.parent = this.node;
         }
+        for (let i = 0; i<particleNumber; i++) {
+            //
+            let sphere = spheres[i + 1];
+            
+            let joint = sphere.node.getComponent(cc.DistanceJoint);
 
-        this.spheres = spheres;
-        let spriteFrame = this.spriteFrame1;
-        if(this.enableContact) {
-            spriteFrame = this.spriteFrame2
+            if (i === 0) {
+                joint.connectedBody = spheres[spheres.length - 1];
+              
+            } else {
+                joint.connectedBody = spheres[i];
+            }
         }
+
+        
+       
+        this.spheres = spheres;
+        let spriteFrame = this.spriteFrame;
+
+        //body 图片放到beautify方法去
+        // return;
         this.bodySpriteFrame = spriteFrame;
         if (spriteFrame) {
             let newTexture = spriteFrame.getTexture();
@@ -99,7 +113,7 @@ export default class Ball extends cc.Component {
             }
         }
 
-        this.beautify();
+        // this.beautify();
     }
     beautify(){
         let group = '_2'
@@ -118,7 +132,7 @@ export default class Ball extends cc.Component {
         }
 
         let posEye = cc.v3(0,this.sphereSize,0);
-        let edge = this.sphereSize + this.particleRadius;
+        let edge = this.sphereSize + this.motorOffset;
         let posTail = cc.v3(edge,20,0).mul(-1);
         let posHair = cc.v3(0,edge,0);
         let pos = [posEye,posHair,posTail];
@@ -143,10 +157,11 @@ export default class Ball extends cc.Component {
         node.group = 'ball';
         let body = node.addComponent(cc.RigidBody);
         body.enabledContactListener = true;
+        // body.type = cc.RigidBodyType.Static;
         let collider = node.addComponent(cc.PhysicsCircleCollider);
-        collider.density = 0.3;
+        collider.density = 1;
         collider.restitution = 0
-        collider.friction = 0.8;
+        collider.friction = 0.5;
         collider.radius = r;
 
         if(this.enableContact){
@@ -186,7 +201,7 @@ export default class Ball extends cc.Component {
         this._initMesh = true;
     }
     smoothPoints(points) {
-  
+        return points;
         let center = points[0];
         let vertices = [center];
         // let radians =  Math.PI / this.particleNumber;
@@ -204,33 +219,6 @@ export default class Ball extends cc.Component {
             for (let index = 1; index <= insertNum; index++) {
                 let part = index / (insertNum + 1); 
                 let insertPos = position.add(offset.mul(part)).mul(ratio);
-                vertices.push(insertPos);
-            }
-        }
-        return vertices;
-    }
-    smoothPoints2(points) {
-        //可以根据两向量的长度差，确定插值点大概位置
-        let center = points[0];
-        let vertices = [center];
-        //每一部分的弧度
-        let radians =  Math.PI / this.particleNumber;
-        for (let index = 1; index < points.length; index++) {
-            const position = points[index];
-            let comparePoint = index === points.length - 1 ? points[1] : points[index+1];
-            //长度差            
-            let offsetLen = comparePoint.mag() - position.mag();
-            let vector = position.normalize();
-            //插值弧度
-            let insertNum = 3;
-            radians = radians / (insertNum + 1);
-            vertices.push(position);
-            for (let index = 1; index <= insertNum; index++) {
-                let part = index / (insertNum + 1);
-                //插值向量
-                //FIX:这里插值的东西没意义，点就在两向量连线上
-                let insertPos = position.add(vector.mul(part *　offsetLen));
-                insertPos =cc.v2(position).rotate(radians);
                 vertices.push(insertPos);
             }
         }
@@ -254,7 +242,7 @@ export default class Ball extends cc.Component {
         let center =  vertices[0];
         vertices = this.smoothPoints(points);
         //这个半径点
-        let radius = this.sphereSize + this.particleRadius;
+        let radius = this.sphereSize + this.motorOffset;
         for (let index = 0; index < vertices.length; index++) {
             const vertex = vertices[index];
             let uvX = (vertex.x - center.x) / radius / 2 + 0.5;
@@ -289,9 +277,28 @@ export default class Ball extends cc.Component {
             this.beautyNode.angle = angle;
         }
     }
+    // start(){
+    //     setInterval(() => {
+    //         let body = this.spheres[0];
+    //         let center = body.getWorldCenter();
+    //         let mass = body.getMass()
+    //         console.log('rotate',mass)
+    //         let vec = cc.v2(0,100000)
+    //         body.applyForce(vec,center,true);
+    //     },2000)
+    // }
+    applyForce(){
+        let body = this.spheres[0];
+        body.applyTorque(-300,true);
+    }
     update (dt) {
         this.updateMeshVertex();
-        this.followRotate();
+        let body = this.spheres[0];
+        let targetPos = body.getWorldCenter()
+        let localTargetPos = this.node.parent.convertToNodeSpaceAR(targetPos)
+
+        this.node.setPosition(localTargetPos);
+        // this.applyForce()
     }
     getRawPoints(){
         let center = this.spheres[0];
