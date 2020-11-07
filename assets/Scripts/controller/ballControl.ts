@@ -51,9 +51,9 @@ export default class BallController extends cc.Component{
         let vec = cc.v2(0,100000)
         body.applyForce(vec,center,true);
     }
-    applyForce(){
+    applyForce(force=-300){
         let body = this.body;
-        body.applyTorque(-300,true);
+        body.applyTorque(force,true);
     }
     disableSchedule(){
         this.unschedule(this.autoJump)
@@ -103,6 +103,8 @@ export default class BallController extends cc.Component{
 
     onBeginContact (contact, selfCollider, otherCollider) {
         //只计算地面，空中平台
+        console.log('tag',otherCollider.tag)
+
         if(otherCollider.tag === TagType.FINAL_TAG){
             console.log('****',this.isAI ? 'AI finish' :'player finish');
             this.winGame()
@@ -130,8 +132,19 @@ export default class BallController extends cc.Component{
     update (dt) {
      
         if(!this.gameStart) return;
+        
         this.applyForce();
-        return;
+
+        // if(this.buffState === TagType.DEBUFF_TAG) {
+        //     let velocity = this.body.linearVelocity;
+        //     let vx = Math.min(20,velocity.x);
+        //     let vy = Math.min(20,velocity.y)
+        //     let av = this.body.angularVelocity;
+        //     this.body.linearVelocity = cc.v2(vx,vy);
+        //     this.body.angularVelocity = Math.min(av,20);
+        // }
+
+        // return;
 
         // if(!this.isAI) {
         //     return;

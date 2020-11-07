@@ -23,8 +23,9 @@ export default class CameraController extends cc.Component {
         }
         let mBall = this.target.getComponent('motorBall');
         let ps = mBall.spheres[0];
-        let targetPos = ps.getWorldCenter();
-        // let targetPos = this.target.convertToWorldSpaceAR(cc.Vec2.ZERO);
+        // let targetPos = ps.getWorldCenter();
+        
+        let targetPos = this.target.convertToWorldSpaceAR(cc.Vec2.ZERO);
         let localTargetPos = this.node.parent.convertToNodeSpaceAR(targetPos)
         this.node.x = Math.max( localTargetPos.x,0);
         // this.node.y = Math.max(localTargetPos.y,this.initY)

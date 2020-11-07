@@ -19,13 +19,13 @@ export default class Ball extends cc.Component {
     @property(cc.SpriteFrame)
     spriteFrame: cc.SpriteFrame = null;
     
-    particleNumber: number = 16  //最好是偶数，保证落地时不会摇晃
+    // particleNumber: number = 16  //最好是偶数，保证落地时不会摇晃
+    // motorOffset: number = 28
+    // sphereSize: number = 8
+
+    particleNumber: number = 10  //最好是偶数，保证落地时不会摇晃
     motorOffset: number = 28
     sphereSize: number = 8
-
-    // particleNumber: number = 6  //最好是偶数，保证落地时不会摇晃
-    // motorOffset: number = 40
-    // sphereSize: number = 20
 
     centerSize: number = 20
 
@@ -38,7 +38,7 @@ export default class Ball extends cc.Component {
     spheres: Array<any> = []
     // use this for initialization
     onLoad(){
-        // this.prepare()
+        // this.prepare();
     }
     initWithPosition(position){
         this.node.x = position.x;
@@ -53,15 +53,16 @@ export default class Ball extends cc.Component {
         let particleDistance =  Math.sin(particleAngle) * motorOffset * Math.sin((Math.PI - particleAngle)/2);
 
         let spheres = [];
-        let body =  this._createSphere(0, 0, this.centerSize,null);
-        body.node.parent = this.node;
+        // let body =  this._createSphere(0, 0, this.centerSize,null);
+        // body.node.parent = this.node;
+        let body = this.node.getComponent(cc.RigidBody);
         spheres.push(body);
 
         let aroundDistance = getThirdEdge(sphereSize,this.centerSize,particleAngle);
 
         for (let i=0; i<particleNumber; i++) {
             //
-            let angle = particleAngle*i;
+            let angle = particleAngle*i + particleAngle/2;
             let posX = motorOffset * Math.cos(angle);
             let posY = motorOffset * Math.sin(angle);
             let sphere = this._createSphere(posX, posY, sphereSize,null);
@@ -161,7 +162,7 @@ export default class Ball extends cc.Component {
         let collider = node.addComponent(cc.PhysicsCircleCollider);
         collider.density = 1;
         collider.restitution = 0
-        collider.friction = 0.5;
+        collider.friction = 0.2;
         collider.radius = r;
 
         if(this.enableContact){
@@ -201,7 +202,7 @@ export default class Ball extends cc.Component {
         this._initMesh = true;
     }
     smoothPoints(points) {
-        return points;
+        // return points;
         let center = points[0];
         let vertices = [center];
         // let radians =  Math.PI / this.particleNumber;
@@ -293,12 +294,13 @@ export default class Ball extends cc.Component {
     }
     update (dt) {
         this.updateMeshVertex();
-        let body = this.spheres[0];
-        let targetPos = body.getWorldCenter()
-        let localTargetPos = this.node.parent.convertToNodeSpaceAR(targetPos)
+        // let body = this.spheres[0];
+        // if(!body) return;
+        // let targetPos = body.getWorldCenter()
+        // let localTargetPos = this.node.parent.convertToNodeSpaceAR(targetPos)
 
-        this.node.setPosition(localTargetPos);
-        this.followRotate()
+        // this.node.setPosition(localTargetPos);
+        // this.followRotate();
         // this.applyForce()
     }
     getRawPoints(){

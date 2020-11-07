@@ -117,8 +117,8 @@ export default class MainWorld extends cc.Component{
         // return
         this.scheduleOnce(() => {
             this.startGame();
-            const phyMgr = cc.director.getPhysicsManager();
-            phyMgr.gravity = cc.v2(2 * 32,-10 * 32);
+            // const phyMgr = cc.director.getPhysicsManager();
+            // phyMgr.gravity = cc.v2(2 * 32,-10 * 32);
         },3);
     }
     onKeyDown (event) {
