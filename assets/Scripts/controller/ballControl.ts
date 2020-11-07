@@ -128,9 +128,11 @@ export default class BallController extends cc.Component{
 
     }
     update (dt) {
+     
+        if(!this.gameStart) return;
         this.applyForce();
         return;
-        if(!this.gameStart) return;
+
         // if(!this.isAI) {
         //     return;
         // } 

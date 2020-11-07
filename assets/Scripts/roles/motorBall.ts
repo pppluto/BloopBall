@@ -113,7 +113,7 @@ export default class Ball extends cc.Component {
             }
         }
 
-        // this.beautify();
+        this.beautify();
     }
     beautify(){
         let group = '_2'
@@ -298,6 +298,7 @@ export default class Ball extends cc.Component {
         let localTargetPos = this.node.parent.convertToNodeSpaceAR(targetPos)
 
         this.node.setPosition(localTargetPos);
+        this.followRotate()
         // this.applyForce()
     }
     getRawPoints(){
