@@ -189,7 +189,7 @@ export default class MainWorld extends cc.Component{
         host.useSkill(player);
     }
     prepareBalls(){
-        let player_num = 1;
+        let player_num = 4;
         let yPosition = 300;
         let xPosition = 400;
         for (let index = 0; index < player_num; index++) {
@@ -235,15 +235,15 @@ export default class MainWorld extends cc.Component{
     }
     addTerrian(){
         console.log('add more terrian',this.xOffset)
-        let mapLength = this.xOffset + cc.winSize.width;
-        while (this.xOffset < mapLength) {
+        let currentMapLength = this.xOffset + cc.winSize.width;
+        while (this.xOffset < currentMapLength) {
             this.generateTerrian();
         }
         this.prepareBarriers();
+        let offset = cc.winSize.width / 2 +  100;
 
-        if(this.xOffset > this.mapLength){
-            let offset = cc.winSize.width / 2 +  100;
-            this.createEndMark(this.xOffset - offset);
+        if(this.xOffset > this.mapLength + offset ){
+            this.createEndMark(this.mapLength);
             this.createFinalTerrian();
         }
 
