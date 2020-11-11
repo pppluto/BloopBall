@@ -1,8 +1,9 @@
 
 import ColliderListener from '../common/colliderListener';
-
+import { SKinConfig,SkinBody,SkinMapping } from './RoleMapping'
 const { ccclass, property } = cc._decorator;
 
+//余弦定理
 const getThirdEdge  = (a,b,a2b) => {
     let tmp = a * a + b * b - 2*a*b*Math.cos(a2b);
     return Math.sqrt(tmp);
@@ -19,9 +20,9 @@ export default class Ball extends cc.Component {
     @property(cc.SpriteFrame)
     spriteFrame: cc.SpriteFrame = null;
     
-    // particleNumber: number = 16  //最好是偶数，保证落地时不会摇晃
-    // motorOffset: number = 28
-    // sphereSize: number = 8
+    // particleNumber: number = 6  //最好是偶数，保证落地时不会摇晃
+    // motorOffset: number = 40
+    // sphereSize: number = 20
 
     particleNumber: number = 10  //最好是偶数，保证落地时不会摇晃
     motorOffset: number = 28
@@ -30,15 +31,34 @@ export default class Ball extends cc.Component {
     centerSize: number = 20
 
     beautyNode: cc.Node = null;
+    beautyBackNode: cc.Node = null;
 
     enableContact: boolean = false
     _initMesh: boolean = false;
     bodySpriteFrame: cc.SpriteFrame = null;
 
     spheres: Array<any> = []
+
+    skinConfig: SKinConfig = null// SkinMapping.spider
+    skinSpritesCache: cc.Asset | cc.Asset[] = []
     // use this for initialization
     onLoad(){
         // this.prepare();
+      
+        this.beautyNode = new cc.Node();
+        this.beautyNode.parent = this.node;
+        this.beautyNode.position = cc.v3(0,0,0);
+        this.beautyNode.zIndex = 100;
+
+        this.meshRenderer.node.zIndex = 15;
+
+        this.beautyBackNode = new cc.Node();
+        this.beautyBackNode.parent = this.node;
+        this.beautyBackNode.position = cc.v3(0,0,0);
+        this.beautyBackNode.zIndex = 0;
+
+        //TODO:
+        // this.preloadSkin()
     }
     initWithPosition(position){
         this.node.x = position.x;
@@ -100,10 +120,34 @@ export default class Ball extends cc.Component {
         
        
         this.spheres = spheres;
-        let spriteFrame = this.spriteFrame;
-
-        //body 图片放到beautify方法去
-        // return;
+        this.beautify();
+    }
+    preloadSkin(){
+        if(this.skinConfig){
+            let skinConfig = this.skinConfig;
+            let bodies = skinConfig.bodies;
+            let paths = bodies.map(e => `roleSkin/${skinConfig.name}/` + e.name);
+            //TODO:测试一下paths只有一个时，返回的是数组还是单个对象
+            cc.resources.load(paths, cc.SpriteFrame,(err,sprites) => {
+                if(!sprites) return;
+                this.skinSpritesCache = sprites
+             });
+        }
+      
+    }
+    beautify(){
+        let skinConfig = this.skinConfig;
+        if(!skinConfig) return;
+        let bodies = skinConfig.bodies;
+        // tail
+        let paths = bodies.map(e => `roleSkin/${skinConfig.name}/` + e.name);
+        cc.resources.load(paths, cc.SpriteFrame,(err,sprites) => {
+           console.log('sprites',sprites);
+           if(!sprites) return;
+           this.createBeautifyNode(sprites,bodies);
+        });
+    }
+    drawBody(spriteFrame){
         this.bodySpriteFrame = spriteFrame;
         if (spriteFrame) {
             let newTexture = spriteFrame.getTexture();
@@ -113,37 +157,31 @@ export default class Ball extends cc.Component {
                 spriteFrame.once('load', this.onSpriteFrameLoaded, this);
             }
         }
-
-        this.beautify();
     }
-    beautify(){
-        let group = '_2'
-        // tail
-        let paths = ['eye','hair',].map(e => 'bodypart/' + e + group);
-        cc.resources.load(paths, cc.SpriteFrame,(err,sprites) => {
-           console.log('sprites',sprites);
-           this.createBeautifyNode(sprites);
-        });
-    }
-    createBeautifyNode(sprites){
-        if(!this.beautyNode) {
-           this.beautyNode = new cc.Node();
-           this.beautyNode.parent = this.node;
-           this.beautyNode.position = cc.v3(0,0,0)            
-        }
-
+    createBeautifyNode(sprites,bodies:Array<SkinBody>){
         let posEye = cc.v3(0,this.sphereSize,0);
         let edge = this.sphereSize + this.motorOffset;
-        let posTail = cc.v3(edge,20,0).mul(-1);
+        let posTail = cc.v3(edge-10,10,0).mul(-1);
         let posHair = cc.v3(0,edge,0);
-        let pos = [posEye,posHair,posTail];
+        let pos = [cc.Vec3.ZERO,posEye,posHair,posTail];
         sprites.forEach((element,index) => {
+            if(index === 0) {
+                this.drawBody(element)
+                return;
+            }
+            let body = bodies[index];
             let spNode = new cc.Node();
             let sp = spNode.addComponent(cc.Sprite)
             sp.spriteFrame = element;
             spNode.scale = 0.5;
             spNode.position = pos[index];
-            spNode.parent = this.beautyNode;
+            if(body.isBack){
+                spNode.parent = this.beautyBackNode;
+
+            } else {
+                spNode.parent = this.beautyNode;
+
+            }
         });
         
 

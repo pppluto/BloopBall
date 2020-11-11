@@ -52,6 +52,9 @@ export default class BallController extends cc.Component{
         body.applyForce(vec,center,true);
     }
     applyForce(force=-300){
+        if(this.buffState === TagType.DEBUFF_TAG) {
+            force += 100;
+        }
         let body = this.body;
         body.applyTorque(force,true);
     }
@@ -132,7 +135,8 @@ export default class BallController extends cc.Component{
     update (dt) {
      
         if(!this.gameStart) return;
-        
+        if(this._finished) return;
+
         this.applyForce();
 
         // if(this.buffState === TagType.DEBUFF_TAG) {

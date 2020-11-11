@@ -1,10 +1,16 @@
 // http://www.emanueleferonato.com/2011/10/04/create-a-terrain-like-the-one-in-tiny-wings-with-flash-and-box2d-%E2%80%93-adding-more-bumps/
 import SkillHost from './roles/skillHost'
+import { SkinMapping } from './roles/RoleMapping'
 
 cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
     let physicsManager = cc.director.getPhysicsManager();
     physicsManager.enabled = true;
-    
+   
+    physicsManager.enabledAccumulator = true;
+    physicsManager['FIXED_TIME_STEP'] = 1/20;
+    physicsManager['VELOCITY_ITERATIONS'] = 5;
+    physicsManager['POSITION_ITERATIONS'] = 5;
+   
     physicsManager.debugDrawFlags = 
         0;
         // cc.PhysicsManager.DrawBits.e_aabbBit |
@@ -108,7 +114,6 @@ export default class MainWorld extends cc.Component{
         this.surfaceMesh.zIndex = 101;
 
         this.prepareTerrian();
-        this.prepareBarriers();
         this.prepareBalls();
 
       
@@ -184,7 +189,7 @@ export default class MainWorld extends cc.Component{
         host.useSkill(player);
     }
     prepareBalls(){
-        let player_num = 4;
+        let player_num = 1;
         let yPosition = 300;
         let xPosition = 400;
         for (let index = 0; index < player_num; index++) {
@@ -192,6 +197,7 @@ export default class MainWorld extends cc.Component{
             let ball = otherPlayer.getComponent('motorBall');
             //先确定位置，不然初始化时，会因为堆在一起产生碰撞效果
             ball.initWithPosition(cc.v2( xPosition + (index + 1) * 100, yPosition ));
+            ball.skinConfig = SkinMapping['spider'];
             this.node.addChild(otherPlayer);
             ball.enableContact = index === 0;
             ball.prepare()
@@ -207,24 +213,53 @@ export default class MainWorld extends cc.Component{
                 let playerC = this.playerCamera.getComponent('camera-control');
                 playerC.target = otherPlayer;
                 let host = otherPlayer.addComponent(SkillHost);
-                host.skillConfig = {name:'spider',spinePath:'spines/spider'}
+                host.skillConfig =  SkinMapping['spider'].skill;
             }
         }
     }
     prepareTerrian(){
+        this.createLeftBoundary();
+
+        //TODO:只创建部分地形，后面根据游戏动态创建(障碍道具同理)
         //创建地形
-        while (this.xOffset < this.mapLength) {
+        // this.mapLength
+        let partMapLength = cc.winSize.width * 2;
+        while (this.xOffset < partMapLength) {
             this.generateTerrian();
         }
+        this.prepareBarriers();
 
-        this.createFinalTerrian();
-        this.createLeftBoundary();
-        let offset = cc.winSize.width / 2 +  100;
-        this.createEndMark(this.xOffset - offset)
+        // this.createEndMark(200)
+        this.updateMesh()
+      
+    }
+    addTerrian(){
+        console.log('add more terrian',this.xOffset)
+        let mapLength = this.xOffset + cc.winSize.width;
+        while (this.xOffset < mapLength) {
+            this.generateTerrian();
+        }
+        this.prepareBarriers();
+
+        if(this.xOffset > this.mapLength){
+            let offset = cc.winSize.width / 2 +  100;
+            this.createEndMark(this.xOffset - offset);
+            this.createFinalTerrian();
+        }
+
+        this.updateMesh();
+    }
+    updateMesh(){
+        let {vertices,indices,uvs} =  this.calcVerties()
+        this.renderMesh(vertices,indices,uvs);
+        this.renderSurface()
+    }
+    calcVerties(){
         const texture = this.sf.getTexture();
         // texture.update({premultiplyAlpha: true})
-
-        let vertices = this._meshPoints; 
+        let offscreenX = this.getOffscreenX();
+        console.log('offscreenX',offscreenX)
+        let vertices = this._meshPoints.filter(v => v.x >= offscreenX); 
         let indices = []; //
 
         let lens = vertices.length / 2 - 1; 
@@ -238,10 +273,10 @@ export default class MainWorld extends cc.Component{
         }
         let texWidth =  texture.width;
         let texHeight = texture.height;
-        let uvs = this._meshPoints.map((v,index) => {
+        let uvs = vertices.map((v,index) => {
             let num = Math.floor(index/2);
             let isTop = index % 2 !== 0;
-            let width = num * this.pixelStep;
+            let width = num * this.pixelStep + offscreenX;
 
             let reverse = Math.floor(width/texWidth) %2 !==0;
             let mod = width % texWidth;
@@ -250,8 +285,7 @@ export default class MainWorld extends cc.Component{
             let uvy = isTop ?  1 - ry : 1;
             return cc.v2(uvx,uvy);
         });
-        this.renderMesh(vertices,indices,uvs);
-        this.renderSurface()
+        return {vertices,indices,uvs};
     }
     createLeftBoundary(){
         let positionX = 20;
@@ -298,7 +332,8 @@ export default class MainWorld extends cc.Component{
 
     }
     renderSurface(){
-        let vertices = this._meshPoints; 
+        let offscreenX = this.getOffscreenX();
+        let vertices = this._meshPoints.filter(v => v.x > offscreenX); 
         let indices = []; //
         let texture = this.surfaceSf.getTexture();
         let surfaceH = 20;
@@ -319,7 +354,7 @@ export default class MainWorld extends cc.Component{
             let b2 = index*2 + 3;
             indices = indices.concat([a1,b1,a2,b1,a2,b2]);
         }
-        let uvs = this._meshPoints.map((v,index) => {
+        let uvs = vertices.map((v,index) => {
             let isTop = index % 2 !== 0;
             let uvy = isTop ? 0 : 1;
             return cc.v2(0,uvy);
@@ -387,19 +422,45 @@ export default class MainWorld extends cc.Component{
 
         meshRender.mesh = mesh;
     }
+    getOffscreenX(){
+        if(!this.balls || !this.balls.length) return 0;
+    
+        let lastX = this.balls[0].x;
+        for (let index = 1; index < this.balls.length; index++) {
+            const element = this.balls[index];
+            if(element.x < lastX){
+                lastX = element.x
+            }            
+        }
+        return Math.max(lastX - cc.winSize.width/2-100,0); //留一点余量
+    }
+    getFirstBall(){
+        if(!this.balls || !this.balls.length) return null
+
+        let first = this.balls[0];
+        for (let index = 1; index < this.balls.length; index++) {
+            const element = this.balls[index];
+            if(element.x > first.x){
+                first = element;
+            }            
+        }
+        return first;
+    }
     generateTerrianPiece (xOffset, points) {
         let hills = this.hills;
 
         //游戏中不会往后退，可以通过下面来复用 collider 地形
         //注意同时要更新 mesh 的顶点数据
-        // let first = hills[0];
-        // if (first && (this.target.x - first.node.x > 1000)) {
-        //     first.node.x = xOffset;
-        //     first.collider.points = points;
-        //     first.collider.apply();
-        //     hills.push( hills.shift() );
-        //     return;
-        // }
+       
+        let offscreenX = this.getOffscreenX()
+        let first = hills[0];
+        if (first && (offscreenX > first.node.x)) {
+            first.node.x = xOffset;
+            first.collider.points = points;
+            first.collider.apply();
+            hills.push( hills.shift() );
+            return;
+        }
 
         //Y不能未负数？？
         try {
@@ -468,7 +529,11 @@ export default class MainWorld extends cc.Component{
             points.push( cc.v2(0,   yHeight  ));
             points.push( cc.v2( pixelStep,nextY) );
             points.push( cc.v2( pixelStep, 0) );
-            this.generateTerrianPiece(xOffset+ j*pixelStep, points);
+
+            //间隔开，并不影响物理效果，节省collider node
+            if(j % 2){
+                this.generateTerrianPiece(xOffset+ j*pixelStep, points);
+            }
 
             this._meshPoints.push(cc.v2(xOffset+ (j+1)*pixelStep,0))
             this._meshPoints.push(cc.v2(xOffset+ (j+1)*pixelStep,nextY))
@@ -503,7 +568,10 @@ export default class MainWorld extends cc.Component{
             points.push( cc.v2( 0,     yHeight) );
             points.push( cc.v2( pixelStep, nextY) );
             points.push( cc.v2( pixelStep, 0) );
-            this.generateTerrianPiece(xOffset+ j*pixelStep, points);
+
+            if(j % 2){
+                this.generateTerrianPiece(xOffset+ j*pixelStep, points);
+            }
 
             this._meshPoints.push(cc.v2(xOffset+ (j+1)*pixelStep,0))
 
@@ -529,19 +597,23 @@ export default class MainWorld extends cc.Component{
     prepareBarriers(){
         //应该在所有点中去生成障碍，这里只做demo
         this._extremePoints.forEach((ePoint,index) => {
-            if(index < 5 ||　index % 3 !== 0) return; 
+
+            if(ePoint.x < cc.winSize.width * 2) return;
 
             if(ePoint.x > this.xOffset - 1000) return;
 
             if(ePoint.y > MIN_HEIGHT) {
                let tmp = Math.random() > 0.5;
+               let preX = ePoint.x - 10;
+               let preY = this.getMaxPosWithXOffset(preX);
                if(tmp){
-                   this.generateGroundBarrier(ePoint,this._extremePoints[index-1])
+                   this.generateGroundBarrier(ePoint,cc.v2(preX,preY))
                } else {
                    this.generateAirBarrier(ePoint)
                }
             }
         });
+        this._extremePoints = []
     }
     
     generateAirBarrier(position,index?){
@@ -571,6 +643,12 @@ export default class MainWorld extends cc.Component{
     
     // called every frame, uncomment this function to activate update callback
     update (dt) {
-        if (!this.target) return;
+        if(this.playerFinish) return;
+        //动态创建地形和障碍，回收之前的地形和障碍
+        let firstBall = this.getFirstBall();
+        // return;
+        if(firstBall && this.xOffset - firstBall.x < cc.winSize.width){
+            this.addTerrian();
+        }
     }
 }   

@@ -1,7 +1,7 @@
 {
   "title": "bloop-go",
   "packageName": "org.cocos2d.demo",
-  "startScene": "9c5cce92-3e57-4183-8e00-566a4f4b0989",
+  "startScene": "25e2496d-5dba-4162-a22d-8fbe1de2821c",
   "excludeScenes": [],
   "orientation": {
     "landscapeLeft": true,
@@ -41,7 +41,7 @@
     "width": 1280
   },
   "android-instant": {
-    "REMOTE_SERVER_ROOT": "",
+    "REMOTE_SERVER_ROOT": "http://192.168.3.93:7456/preview-android-instant/",
     "host": "",
     "packageName": "org.cocos2d.demo",
     "pathPattern": "",
@@ -49,5 +49,6 @@
     "scheme": "https",
     "skipRecord": false
   },
-  "appBundle": false
+  "appBundle": false,
+  "includeAnySDK": false
 }

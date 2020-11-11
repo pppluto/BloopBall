@@ -4,9 +4,16 @@ if (cc.sys.platform === cc.sys.BYTEDANCE_GAME) {
 } else if (cc.sys.platform === cc.sys.WECHAT_GAME) {
   platformCtx = wx;
 }
+const generateUUID = () => {
+  let ts = new Date().getTime();
+  let sub = String(ts).substr(-16);
+  let randomTail = Math.floor(Math.random() * 10000);
+  let uuid = sub + randomTail;
+  return uuid;
+};
 
 const GAME_INFO = {
-  _name: 'bloop-go',
+  gameName: 'bloop-go',
 };
 // https://up.jiyibian.com/
 /**
@@ -19,66 +26,23 @@ const GAME_INFO = {
  * 用户数据 uesrInfo
  */
 const UPLOAD_HOST = 'https://up.jiyibian.com/';
-function buildQuery(params) {
-  var esc = encodeURIComponent;
-  var query = Object.keys(params)
-    .map((k) => esc(k) + '=' + esc(params[k]))
-    .join('&');
-  return query;
-}
+
 class Statistics {
   constructor() {
     this.gameInfo = GAME_INFO;
     this.sysInfo = {};
     this.userInfo = {};
     this.init();
+    this.restoreUUID();
 
-    this._preScene = null;
-    this._curSceneStartLoadingTS = new Date().getTime();
-    this._curSceneLoadedTS = new Date().getTime();
-
-    //新场景加载, 这个加载事件在global里做的hack
-    cc.director.on(cc.Director.EVENT_BEFORE_SCENE_LOADING, () => {
-      let scene = cc.director.getScene();
-      if (!scene) {
-        return;
-      }
-      let sceneName = scene.name;
-      let nowTS = new Date().getTime();
-      // console.log('EVENT_BEFORE_SCENE_LOADING--', sceneName);
-
-      //记录当前场景名和
-      this._preScene = sceneName;
-      this._curSceneStartLoadingTS = nowTS;
-    });
-
-    //新场景运行, 这里减去before的，就是场景加载时间
-    cc.director.on(cc.Director.EVENT_AFTER_SCENE_LAUNCH, () => {
-      let scene = cc.director.getScene();
-      if (!scene) {
-        return;
-      }
-      let sceneName = scene.name;
-      let nowTS = new Date().getTime();
-      let loadDuration = nowTS - this._curSceneStartLoadingTS;
-      let showDuration = nowTS - this._curSceneLoadedTS;
-
-      // console.log('EVENT_AFTER_SCENE_LAUNCH', sceneName);
-
-      if (this._preScene) {
-        // console.log('场景', this._preScene, '持续时间', showDuration);
-        this.trackingSceneShowTS(this._preScene, showDuration);
-      }
-
-      // console.log('前一场景', this._preScene);
-      // console.log('当前场景', sceneName, '加载时间', loadDuration);
-      this.trackingSceneLoadTS(sceneName, this._preScene, loadDuration);
-
-      this._preScene = sceneName;
-      this._curSceneLoadedTS = nowTS;
-    });
   }
-
+  restoreUUID(){
+    let localUUID = cc.sys.localStorage.getItem('_uuid');
+    this.uuid = localUUID || generateUUID();
+    if(!localUUID){
+      cc.sys.localStorage.setItem('_uuid',this.uuid);
+    }
+  }
   init() {
     if (platformCtx) {
       platformCtx.onShow((res) => {
@@ -166,7 +130,8 @@ class Statistics {
     let statData = {
       t: eventName,
       currentScene,
-      _platform: cc.sys.platform,
+      platform: cc.sys.platform,
+      uuid: this.uuid,
       ...this.gameInfo,
       ...this.sysInfo,
       ...this.userInfo,

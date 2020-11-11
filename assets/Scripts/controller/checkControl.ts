@@ -60,7 +60,6 @@ export default class CheckController extends cc.Component{
 
         let isSerial = this.isSameDay(preDate,lastDate);
 
-        this.isSerial = isSerial;
         console.log('isserial',isSerial)
 
         serialDay = isSerial ? checkRecords.length + 1 : 1;

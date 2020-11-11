@@ -1,14 +1,11 @@
 
 const { ccclass, property } = cc._decorator;
 import {TagType} from '../mainWorld'
-interface SKillConfig{
-    name: string,
-    spinePath: string,
-}
+import {SkillConfig} from './RoleMapping'
 
 @ccclass
 export default class SkillHost extends cc.Component {
-    skillConfig: SKillConfig = null;
+    skillConfig: SkillConfig = null;
 
     set(config){
         this.skillConfig = config;

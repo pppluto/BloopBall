@@ -27,25 +27,18 @@ class CaptureUtil {
   }
   /**
    * 
-   * @param {捕捉所需截取内容的camera} camera 
    * @param {回调，返回一个Image对象} cb 
    */
-  captureScreen(camera, cb) {
+  captureScreen(cb) {
     if(!platformCtx) return cb({msg:'no context'});
 
     this._callback = cb;
-    let texture = new cc.RenderTexture();
-    texture.initWithSize(
-      cc.visibleRect.width,
-      cc.visibleRect.height,
-      cc.gfx.RB_FMT_S8
-    );
-    camera.targetTexture = texture;
-    this.createCanvas(camera, texture);
-    this.createImg();
+    cc.director.once(cc.Director.EVENT_AFTER_DRAW,() => {
+      this.createImg();
+    });
   }
   createImg() {
-    var dataURL = this._canvas.toDataURL('image/png');
+    var dataURL = cc.game.canvas.toDataURL('image/png');
     var img = platformCtx.createImage();
     img.onload = (res) => {
       this._callback && this._callback(null, img);
@@ -54,34 +47,6 @@ class CaptureUtil {
       this._callback && this._callback(err);
     };
     img.src = dataURL;
-  }
-  createCanvas(camera, texture) {
-    let width = texture.width;
-    let height = texture.height;
-    if (!this._canvas) {
-      this._canvas = platformCtx.createCanvas();
-
-      this._canvas.width = width;
-      this._canvas.height = height;
-    } else {
-      this.clearCanvas();
-    }
-    let ctx = this._canvas.getContext('2d');
-    camera.render();
-    let data = texture.readPixels();
-    // write the render data
-    let rowBytes = width * 4;
-    for (let row = 0; row < height; row++) {
-      let srow = height - 1 - row;
-      let imageData = ctx.createImageData(width, 1);
-      let start = srow * width * 4;
-      for (let i = 0; i < rowBytes; i++) {
-        imageData.data[i] = data[start + i];
-      }
-
-      ctx.putImageData(imageData, 0, row);
-    }
-    return this._canvas;
   }
   /**
    * 
@@ -106,10 +71,6 @@ class CaptureUtil {
     node.y = 0;
     node.width = cc.winSize.width;
     return node;
-  }
-  clearCanvas() {
-    let ctx = this._canvas.getContext('2d');
-    ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
   }
 }
 

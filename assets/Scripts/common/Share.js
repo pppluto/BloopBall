@@ -9,7 +9,7 @@ const wrapWXShare = (params) => {
 var platformCtx = null;
 if (cc.sys.platform === cc.sys.BYTEDANCE_GAME) {
   platformCtx = tt;
-  platformContext.commonShare = platformCtx.shareAppMessage;
+  platformCtx.commonShare = platformCtx.shareAppMessage;
 } else if (cc.sys.platform === cc.sys.WECHAT_GAME) {
   platformCtx = wx;
   platformCtx.commonShare = wrapWXShare;
