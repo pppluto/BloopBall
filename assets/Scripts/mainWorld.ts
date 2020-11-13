@@ -4,31 +4,6 @@ import { SkinMapping } from './roles/RoleMapping'
 import { BarrierMapping } from './barrier/Barrier';
 import { BarrierHost } from './barrier/barrierHost';
 
-cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
-    let physicsManager = cc.director.getPhysicsManager();
-    physicsManager.enabled = true;
-   
-    //减少物理计算步长/迭代次数
-    // physicsManager.enabledAccumulator = true;
-    // physicsManager['FIXED_TIME_STEP'] = 1/20;
-    // physicsManager['VELOCITY_ITERATIONS'] = 5;
-    // physicsManager['POSITION_ITERATIONS'] = 5;
-   
-    physicsManager.debugDrawFlags = 
-        0;
-        // cc.PhysicsManager.DrawBits.e_aabbBit |
-        cc.PhysicsManager.DrawBits.e_jointBit |
-        cc.PhysicsManager.DrawBits.e_shapeBit
-        ;
-
-    // var manager = cc.director.getCollisionManager();
-    // manager.enabled = true;
-    // manager.enabledDebugDraw = true;
-    // manager.enabledDrawBoundingBox = true;
-
-    // cc.macro.SHOW_MESH_WIREFRAME = true;
-
-});
 
 const MIN_HEIGHT = 100;
 const MAX_HEIGHT = 250;
@@ -62,32 +37,14 @@ export default class MainWorld extends cc.Component{
     @property(cc.Node)
     surfaceMesh: cc.Node = null
    
-    //ball prefabs
-    @property(cc.Prefab)
-    ball2: cc.Prefab = null
-    @property(cc.Prefab)
-    motorBall: cc.Prefab = null
-
+    @property(cc.Node)
+    gameCtr: cc.Node = null
     //mark prefabs
     @property(cc.Prefab)
     flag: cc.Prefab = null;
-    //camera
-    @property(cc.Camera)
-    playerCamera: cc.Camera = null
-    otherCamera: cc.Camera = null
-
-    //scene relate
-    @property(cc.Node)
-    gameBoard: cc.Node = null
-    @property(cc.Label)
-    gameHint: cc.Label = null
-    @property(cc.Node)
-    restartBtn: cc.Node = null
 
     hills: Array<any> = [];
     pools: Array<any> = [];
-    balls: Array<cc.Node> = [];
-    playerRank: number = 1;
     playerFinish: boolean = false;
     initHeight: number = 150;
     xOffset: number = 0
@@ -100,116 +57,12 @@ export default class MainWorld extends cc.Component{
     mapEnd: boolean = false;
 
     onLoad () {
-        this.gameBoard.active = false;
         this.groundMesh.zIndex = 100;
         this.surfaceMesh.zIndex = 101;
 
         this.prepareTerrian();
-        this.prepareBalls();
+    }
 
-      
-        cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, this.onKeyDown, this);
-        cc.systemEvent.on(cc.SystemEvent.EventType['TOUCH_START'], this.onTouchStart, this);
-        // return
-        this.scheduleOnce(() => {
-            this.startGame();
-            // const phyMgr = cc.director.getPhysicsManager();
-            // phyMgr.gravity = cc.v2(2 * 32,-10 * 32);
-        },3);
-    }
-    onKeyDown (event) {
-        switch(event.keyCode) {
-            case cc.macro.KEY.w:
-            case cc.macro.KEY.up:
-                this.onUpPress();
-                break;
-        }
-    }
-    onTouchStart(){
-        console.log('touchstart');
-        this.onUpPress();
-    }
-    onUpPress(){
-        let player = this.balls[0];
-        if(player){
-            let bc = player.getComponent('ballControl')
-            bc.jumpIfNeed();
-        }
-    }
-    startGame(){
-        console.log('startgame');
-        this.balls.forEach((b) => {
-            let bControl = b.getComponent('ballControl');
-            bControl.gameMgr = this;
-            bControl.startGame();
-        })
-    }
-    playerWin(isAI){
-        console.log('player win',isAI)
-        if(this.playerFinish) return;
-        if(isAI && !this.playerFinish) {
-            this.playerRank +=1;
-        } else {
-          this.showBoard()
-        }
-    }
-    showBoard(){
-        this.playerFinish = true;
-        this.gameBoard.active = true;
-        this.gameHint.string = `您获得第${this.playerRank}名`;
-    }
-    restart(){
-        cc.director.loadScene('Main');
-    }
-    // useSkill(){
-    //     let player = this.balls[0];
-    //     if(player){
-    //         let bc = player.getComponent('ballControl')
-    //         bc.useSkill();
-    //     }
-    // },
-    autoUseSkill(){
-        let otherPlayers = this.balls.slice(1);
-    }
-    useSkill(){
-        let player = this.balls[0];
-        if(!player) return;
-
-        let node = new cc.Node();
-        node.setPosition(player.position);
-        node.parent = this.node;
-        let host = node.addComponent(SkillHost);
-        host.skillConfig = SkinMapping['spider'].skill;
-        host.trigger = player;
-        host.useSkill();
-    }
-    prepareBalls(){
-        let player_num = 4;
-        let yPosition = 300;
-        let xPosition = 400;
-        for (let index = 0; index < player_num; index++) {
-            let otherPlayer = cc.instantiate(this.motorBall);
-            let ball = otherPlayer.getComponent('motorBall');
-            //先确定位置，不然初始化时，会因为堆在一起产生碰撞效果
-            ball.initWithPosition(cc.v2( xPosition + (index + 1) * 100, yPosition ));
-            ball.skinConfig = SkinMapping['spider'];
-            this.node.addChild(otherPlayer);
-            ball.enableContact = index === 0;
-            ball.prepare()
-            
-            let bControl = otherPlayer.getComponent('ballControl')
-            bControl.gameMgr = this;
-            bControl.isAI = index !== 0;
-            bControl.AILevel = index;
-            this.balls.push(otherPlayer);
-            bControl.init();
-
-            if(index === 0){
-                let playerC = this.playerCamera.getComponent('camera-control');
-                playerC.target = otherPlayer;
-            }
-        }
-    }
     prepareTerrian(){
         this.createBoundary(20);
 
@@ -416,12 +269,18 @@ export default class MainWorld extends cc.Component{
 
         meshRender.mesh = mesh;
     }
+    getBalls(){
+        let gameCtr = this.gameCtr.getComponent('gameControl');
+        let balls = gameCtr.balls;
+        return balls
+    }
     getOffscreenX(){
-        if(!this.balls || !this.balls.length) return 0;
+        let balls = this.getBalls()
+        if(!balls || !balls.length) return 0;
     
-        let lastX = this.balls[0].x;
-        for (let index = 1; index < this.balls.length; index++) {
-            const element = this.balls[index];
+        let lastX = balls[0].x;
+        for (let index = 1; index < balls.length; index++) {
+            const element = balls[index];
             if(element.x < lastX){
                 lastX = element.x
             }            
@@ -429,11 +288,12 @@ export default class MainWorld extends cc.Component{
         return Math.max(lastX - cc.winSize.width/2-100,0); //留一点余量
     }
     getFirstBall(){
-        if(!this.balls || !this.balls.length) return null
+        let balls = this.getBalls()
+        if(!balls || !balls.length) return null
 
-        let first = this.balls[0];
-        for (let index = 1; index < this.balls.length; index++) {
-            const element = this.balls[index];
+        let first = balls[0];
+        for (let index = 1; index < balls.length; index++) {
+            const element = balls[index];
             if(element.x > first.x){
                 first = element;
             }            

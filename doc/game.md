@@ -13,7 +13,7 @@ iOS巨卡
   - roles 角色相关(解锁/未解锁, 角色技能配置)
     - AI
   - rank 段位/排行
-  - controller //player,camera
+  - controller //player,camera,game
   - common // 广告，统计，录屏。。。
   - barrier //障碍相关的东西
     global

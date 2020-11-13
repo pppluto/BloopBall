@@ -26,8 +26,6 @@
 - 图片先进行预乘处理，防止黑边
 - uv 点计算需要取 0-1-0-1 连续范围，不然在边缘处因为从 1 直接跨到 0，贴图压在一块而导致闪烁不连贯(正弦)
 
-(ferrain)
-
 - [u3d 移植一下](https://github.com/cjacobwade/HelpfulScripts/blob/master/SmearEffect/Smear.shader)
 
 #### 基础物理知识

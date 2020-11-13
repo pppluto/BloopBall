@@ -1,5 +1,5 @@
-import {Global} from '../global'
-import MainWorld,{TagType}from '../mainWorld'
+import {TagType}from '../mainWorld'
+import GameControl from './gameControl'
 const {ccclass, property} = cc._decorator;
 
 @ccclass
@@ -13,14 +13,10 @@ export default class BallController extends cc.Component{
     isAI: boolean = false;
     _finished: boolean = false;
     body: cc.RigidBody = null;
-    gameMgr: MainWorld = null;
+    gameMgr: GameControl = null;
     _collideCount: number = 0;
 
     onLoad() {
-        //main中控制是否游戏开始
-        // this.gameStart = false;
-        // this.minXSpeed = 200;
-        // this.AILevel = 1;
 
     }
 
