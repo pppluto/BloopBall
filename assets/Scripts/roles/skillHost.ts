@@ -6,7 +6,7 @@ import {SkillConfig} from './RoleMapping'
 @ccclass
 export default class SkillHost extends cc.Component {
     skillConfig: SkillConfig = null;
-
+    trigger: cc.Node = null;
     set(config){
         this.skillConfig = config;
     }
@@ -14,20 +14,19 @@ export default class SkillHost extends cc.Component {
     get(){
         return this.skillConfig;
     }
-    useSkill(player){
-        // let path = 'spines/spider';
+    useSkill(){
         let path = this.skillConfig.spinePath;
         cc.resources.load(path, sp.SkeletonData,(err,skeData) => {
-            this.createSpNode(player,skeData);
+            this.createSpNode(skeData);
         });
     }
-    createSpNode(player,skeData){
+    createSpNode(skeData){
 
         let spNode = new cc.Node();
         spNode.zIndex = 101;
         let skeleton = spNode.addComponent(sp.Skeleton);
 
-        let pos = player.position.add(cc.v3(100,0,0))
+        let pos = cc.v3(100,0,0);
         spNode.setPosition(pos);
         spNode.group = 'special';
         let body = spNode.addComponent(cc.RigidBody);
@@ -38,7 +37,7 @@ export default class SkillHost extends cc.Component {
         collider.sensor = true;
         collider.tag = TagType.DEBUFF_TAG;
         collider.enabled = false;
-        player.parent.addChild(spNode);
+        this.node.addChild(spNode);
         skeleton.timeScale = 1;
         skeleton.skeletonData = skeData;
         skeleton.animation = 'ready';
@@ -51,8 +50,8 @@ export default class SkillHost extends cc.Component {
                 skeleton.setAnimation(0,'skill',false);
                 spNode.setPosition(pos.x + 100,pos.y);
             } else {
-                spNode.parent = null;
-                spNode.destroy()
+                this.node.parent = null;
+                this.node.destroy()
             }
         })
         // setTimeout(() => {

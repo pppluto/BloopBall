@@ -1,6 +1,6 @@
 
 var smooth = require('smooth');
-import ColliderListener = require('../common/colliderListener');
+import ColliderListener = require('../roles/colliderListener');
 
 const {ccclass,property} = cc._decorator;
 

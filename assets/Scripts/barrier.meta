@@ -1,8 +1,8 @@
 {
   "ver": "1.1.2",
-  "uuid": "b02e1f1b-2a7b-4fd7-a72c-24de5e78d173",
-  "isBundle": true,
-  "bundleName": "prefabs",
+  "uuid": "875a22ff-d24e-413d-aa2a-0e01942f9bcb",
+  "isBundle": false,
+  "bundleName": "",
   "priority": 1,
   "compressionType": {},
   "optimizeHotUpdate": {},

@@ -14,6 +14,8 @@ export default class BallController extends cc.Component{
     _finished: boolean = false;
     body: cc.RigidBody = null;
     gameMgr: MainWorld = null;
+    _collideCount: number = 0;
+
     onLoad() {
         //main中控制是否游戏开始
         // this.gameStart = false;
@@ -32,8 +34,8 @@ export default class BallController extends cc.Component{
 
     }
     start () {
-        let motorBall = this.getComponent('motorBall');
-        this.body = motorBall.spheres[0];
+        let ballJS = this.getComponent('motorBall');
+        this.body = ballJS.spheres[0];
     }
     startGame (){
         this.gameStart = true;
@@ -50,6 +52,17 @@ export default class BallController extends cc.Component{
         let mass = body.getMass()
         let vec = cc.v2(0,100000)
         body.applyForce(vec,center,true);
+    }
+
+    applyImpluse(){
+        let ballJS = this.getComponent('motorball');
+        if(!ballJS || !ballJS.spheres) return;
+        ballJS.spheres.forEach(element => {
+            let rigid = element;
+            let center = rigid.getWorldCenter()
+            rigid.applyLinearImpulse(cc.v2(0,100),center,true);
+        });  
+       
     }
     applyForce(force=-300){
         if(this.buffState === TagType.DEBUFF_TAG) {
@@ -92,7 +105,7 @@ export default class BallController extends cc.Component{
         if(now - this.prePressTS < 300) return;
 
         this.prePressTS = now;
-        let collideCount = Global.instance._collideCount;
+        let collideCount = this._collideCount;
         console.log('upPress--collider count',collideCount)
         if(collideCount <= 0) {
             return;
@@ -104,22 +117,28 @@ export default class BallController extends cc.Component{
         this.onUpPress();
     }
 
+    //中心刚体碰撞
     onBeginContact (contact, selfCollider, otherCollider) {
         //只计算地面，空中平台
-        console.log('tag',otherCollider.tag)
 
         if(otherCollider.tag === TagType.FINAL_TAG){
             console.log('****',this.isAI ? 'AI finish' :'player finish');
             this.winGame()
         }
 
-        if(otherCollider.tag === TagType.DEBUFF_TAG && this.isAI){
+        //TODO:区分世界障碍和技能障碍？
+        if(otherCollider.tag === TagType.DEBUFF_TAG){
+
+            let skillhost = otherCollider.node.parent.getComponent('skillHost');
+            let isMy = false;
+            if(skillhost){
+                isMy = skillhost.trigger === this.node;
+                // let effect = skillhost.skillConfig.effect;
+            }
+            if(isMy) return;
+        
             this.buffState = TagType.DEBUFF_TAG;
         }
-    }
-    winGame(){
-        this._finished = true;
-        this.gameMgr.playerWin(this.isAI);
     }
     // 只在两个碰撞体结束接触时被调用一次
     onEndContact (contact, selfCollider, otherCollider) {
@@ -132,10 +151,48 @@ export default class BallController extends cc.Component{
         }
 
     }
+    /**
+     *  //球边缘碰撞
+     * 拿到barrier信息，来限制或增益球的运动
+     *
+     */
+    onAroundBeginContact (contact, selfCollider, otherCollider) {
+        // let barrierHost = otherCollider.node.parent.getComponent('barrierHost');
+        //需要去重处理，有多个边缘球碰撞事件
+        // TODO:技能块区分自己还是别人
+        let controlNode = otherCollider.node.parent;
+        if(controlNode){
+            let otherBallControl = controlNode.getComponent('ballControl')
+        }
+      
+
+        let otherGroup = otherCollider.node.group
+        if(otherGroup ==='ground' || otherGroup ==='block' ){
+            this._collideCount += 1;
+        }
+    }
+    onAroundEndContact (contact, selfCollider, otherCollider) {
+        // let barrierHost = otherCollider.node.parent.getComponent('barrierHost');
+
+        let controlNode = otherCollider.node.parent;
+        if(controlNode){
+            let otherBallControl = controlNode.getComponent('ballControl')
+        }
+
+        let otherGroup = otherCollider.node.group
+        if(otherGroup ==='ground' || otherGroup ==='block' ){
+            this._collideCount -= 1;
+        }
+    }
+    winGame(){
+        this._finished = true;
+        this.disableSchedule();
+        this.gameMgr.playerWin(this.isAI);
+    }
     update (dt) {
      
         if(!this.gameStart) return;
-        if(this._finished) return;
+        // if(this._finished) return;
 
         this.applyForce();
 
@@ -169,6 +226,7 @@ export default class BallController extends cc.Component{
 
         if(this.buffState === TagType.DEBUFF_TAG) {
             this.body.linearVelocity = cc.v2(20,20);
+            this.body.angularVelocity = this.body.angularVelocity/2
         }
     }
 }

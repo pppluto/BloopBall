@@ -1,5 +1,5 @@
 
-import ColliderListener from '../common/colliderListener';
+import ColliderListener from './colliderListener';
 import { SKinConfig,SkinBody,SkinMapping } from './RoleMapping'
 const { ccclass, property } = cc._decorator;
 
@@ -142,7 +142,7 @@ export default class Ball extends cc.Component {
         // tail
         let paths = bodies.map(e => `roleSkin/${skinConfig.name}/` + e.name);
         cc.resources.load(paths, cc.SpriteFrame,(err,sprites) => {
-           console.log('sprites',sprites);
+        //    console.log('sprites',sprites);
            if(!sprites) return;
            this.createBeautifyNode(sprites,bodies);
         });

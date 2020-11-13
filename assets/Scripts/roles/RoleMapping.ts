@@ -2,22 +2,31 @@
 /**
  * x,y -> [-1,1],0,0表示中心点，注意要考虑贴图的宽高
  */
+//技能的效果 比如持续时间等等
+export interface SkillEffect{
+    /**
+    ....
+     */
+    duration?: number
+}
+export interface SkillConfig {
+    name: string,
+    spinePath?: string,
+    effect?: SkillEffect 
+}
+
 export interface SkinBody{
     name: string, //资源名
     x?: number,
     y?: number,
     isBack?: boolean,
 }
-export interface SkillConfig {
-    name: string,
-    spinePath: string
-}
 
 export interface SKinConfig {
     name: string,
-    bodies: Array<SkinBody>,
+    bodies: [SkinBody],
     skill?: SkillConfig,
-    bundleName?: string
+    bundleName?: string //默认会是resources
 }
 
 

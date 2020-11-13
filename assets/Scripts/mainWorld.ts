@@ -1,15 +1,18 @@
 // http://www.emanueleferonato.com/2011/10/04/create-a-terrain-like-the-one-in-tiny-wings-with-flash-and-box2d-%E2%80%93-adding-more-bumps/
 import SkillHost from './roles/skillHost'
 import { SkinMapping } from './roles/RoleMapping'
+import { BarrierMapping } from './barrier/Barrier';
+import { BarrierHost } from './barrier/barrierHost';
 
 cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
     let physicsManager = cc.director.getPhysicsManager();
     physicsManager.enabled = true;
    
-    physicsManager.enabledAccumulator = true;
-    physicsManager['FIXED_TIME_STEP'] = 1/20;
-    physicsManager['VELOCITY_ITERATIONS'] = 5;
-    physicsManager['POSITION_ITERATIONS'] = 5;
+    //减少物理计算步长/迭代次数
+    // physicsManager.enabledAccumulator = true;
+    // physicsManager['FIXED_TIME_STEP'] = 1/20;
+    // physicsManager['VELOCITY_ITERATIONS'] = 5;
+    // physicsManager['POSITION_ITERATIONS'] = 5;
    
     physicsManager.debugDrawFlags = 
         0;
@@ -44,38 +47,26 @@ const {ccclass,property} = cc._decorator
 
 @ccclass
 export default class MainWorld extends cc.Component{
+    //map config
     @property(cc.Float)
     pixelStep: number = 10
-  
-    @property(cc.Node)
-    target: cc.Node = null
-    @property(cc.Node)
-    groundMesh: cc.Node = null
-    @property(cc.Node)
-    surfaceMesh: cc.Node = null
     @property(cc.Float)
     mapLength: number = 4000
     @property(cc.SpriteFrame)
     sf: cc.SpriteFrame = null;
     @property(cc.SpriteFrame)
     surfaceSf: cc.SpriteFrame = null;
+    //mesh
+    @property(cc.Node)
+    groundMesh: cc.Node = null
+    @property(cc.Node)
+    surfaceMesh: cc.Node = null
+   
     //ball prefabs
-    // @property(cc.Prefab)
-    // ball1: cc.Prefab = null
     @property(cc.Prefab)
     ball2: cc.Prefab = null
     @property(cc.Prefab)
     motorBall: cc.Prefab = null
-
-    //barrier prefabs
-    @property(cc.Prefab)
-    airBarrier1: cc.Prefab = null
-    @property(cc.Prefab)
-    airBarrier2: cc.Prefab = null
-    @property(cc.Prefab)
-    groundBarrier1: cc.Prefab = null
-    @property(cc.Prefab)
-    groundBarrier2: cc.Prefab = null
 
     //mark prefabs
     @property(cc.Prefab)
@@ -106,7 +97,7 @@ export default class MainWorld extends cc.Component{
     //极值点 (用来确定空中障碍位置)
     _extremePoints:Array<any> = [];
     // cc.macro.FIX_ARTIFACTS_BY_STRECHING_TEXEL_TMX = 1;
-
+    mapEnd: boolean = false;
 
     onLoad () {
         this.gameBoard.active = false;
@@ -184,9 +175,13 @@ export default class MainWorld extends cc.Component{
         let player = this.balls[0];
         if(!player) return;
 
-        let host = player.getComponent(SkillHost);
-        if(!host) return;
-        host.useSkill(player);
+        let node = new cc.Node();
+        node.setPosition(player.position);
+        node.parent = this.node;
+        let host = node.addComponent(SkillHost);
+        host.skillConfig = SkinMapping['spider'].skill;
+        host.trigger = player;
+        host.useSkill();
     }
     prepareBalls(){
         let player_num = 4;
@@ -212,13 +207,11 @@ export default class MainWorld extends cc.Component{
             if(index === 0){
                 let playerC = this.playerCamera.getComponent('camera-control');
                 playerC.target = otherPlayer;
-                let host = otherPlayer.addComponent(SkillHost);
-                host.skillConfig =  SkinMapping['spider'].skill;
             }
         }
     }
     prepareTerrian(){
-        this.createLeftBoundary();
+        this.createBoundary(20);
 
         //TODO:只创建部分地形，后面根据游戏动态创建(障碍道具同理)
         //创建地形
@@ -234,6 +227,7 @@ export default class MainWorld extends cc.Component{
       
     }
     addTerrian(){
+        if(this.mapEnd) return;
         console.log('add more terrian',this.xOffset)
         let currentMapLength = this.xOffset + cc.winSize.width;
         while (this.xOffset < currentMapLength) {
@@ -245,6 +239,8 @@ export default class MainWorld extends cc.Component{
         if(this.xOffset > this.mapLength + offset ){
             this.createEndMark(this.mapLength);
             this.createFinalTerrian();
+            this.createBoundary(this.xOffset);
+            this.mapEnd = true;
         }
 
         this.updateMesh();
@@ -256,9 +252,7 @@ export default class MainWorld extends cc.Component{
     }
     calcVerties(){
         const texture = this.sf.getTexture();
-        // texture.update({premultiplyAlpha: true})
         let offscreenX = this.getOffscreenX();
-        console.log('offscreenX',offscreenX)
         let vertices = this._meshPoints.filter(v => v.x >= offscreenX); 
         let indices = []; //
 
@@ -287,12 +281,12 @@ export default class MainWorld extends cc.Component{
         });
         return {vertices,indices,uvs};
     }
-    createLeftBoundary(){
-        let positionX = 20;
+    createBoundary(xOffset){
+        let positionX = xOffset;
         let node = new cc.Node();
-        node.x = positionX
-        node.group = 'ground'
-        this.addCollider(node)
+        node.x = positionX;
+        node.group = 'ground';
+        this.addCollider(node);
         node.parent = this.node;
     }
     createEndMark(positionX){
@@ -617,28 +611,24 @@ export default class MainWorld extends cc.Component{
     }
     
     generateAirBarrier(position,index?){
-        let bPrefab =Math.random() > 0.5 ? this.airBarrier1 : this.airBarrier2
-        let barrier = cc.instantiate(bPrefab);
-        let collider = barrier.getComponent(cc.PhysicsPolygonCollider);
-        collider.tag = TagType.BLOCK_TAG;
-
         let randomH = Math.round(Math.random() * 50) + 200;
+        let barrier = new cc.Node();
+        let bc = barrier.addComponent(BarrierHost);
+        bc.barrierConfig = Math.random() > 0.5 ? BarrierMapping.smallAirBlock : BarrierMapping.bigAirBlock;
+
+        bc.initWithPosition(cc.v2( position.x,  position.y+randomH ));
         this.node.addChild(barrier);
-        barrier.setPosition(cc.v2( position.x, position.y+randomH))
     }
     generateGroundBarrier(position,position2){
         let cos = (position.y - position2.y) / (position.x - position2.x)
         let angle = 180 * Math.acos(cos) / Math.PI;
-        let bPrefab =Math.random() > 0.5 ? this.groundBarrier1 : this.groundBarrier2
-        let barrier = cc.instantiate(bPrefab);
-        
-        let collider = barrier.getComponent(cc.PhysicsPolygonCollider);
-        collider.tag = TagType.BLOCK_TAG;
-        this.node.addChild(barrier);
-        let offset = barrier.height/2
-        barrier.setPosition(cc.v2( position.x, position.y + offset-20 ));
-        // barrier.angle  = angle;
 
+        let barrier = new cc.Node();
+        let bc = barrier.addComponent(BarrierHost);
+        bc.barrierConfig = Math.random() > 0.5 ? BarrierMapping.poo : BarrierMapping.cactus;
+
+        bc.initWithPosition(cc.v2( position.x, position.y ),angle);
+        this.node.addChild(barrier);
     }
     
     // called every frame, uncomment this function to activate update callback

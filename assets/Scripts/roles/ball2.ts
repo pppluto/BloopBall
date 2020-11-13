@@ -1,5 +1,6 @@
 
-import ColliderListener from '../common/colliderListener';
+import ColliderListener from './colliderListener';
+import { SKinConfig,SkinBody } from './RoleMapping'
 
 const { ccclass, property } = cc._decorator;
 
@@ -98,40 +99,6 @@ export default class Ball extends cc.Component {
                 spriteFrame.once('load', this.onSpriteFrameLoaded, this);
             }
         }
-
-        this.beautify();
-    }
-    beautify(){
-        let group = '_2'
-        // tail
-        let paths = ['eye','hair',].map(e => 'bodypart/' + e + group);
-        cc.resources.load(paths, cc.SpriteFrame,(err,sprites) => {
-           console.log('sprites',sprites);
-           this.createBeautifyNode(sprites);
-        });
-    }
-    createBeautifyNode(sprites){
-        if(!this.beautyNode) {
-           this.beautyNode = new cc.Node();
-           this.beautyNode.parent = this.node;
-           this.beautyNode.position = cc.v3(0,0,0)            
-        }
-
-        let posEye = cc.v3(0,this.sphereSize,0);
-        let edge = this.sphereSize + this.particleRadius;
-        let posTail = cc.v3(edge,20,0).mul(-1);
-        let posHair = cc.v3(0,edge,0);
-        let pos = [posEye,posHair,posTail];
-        sprites.forEach((element,index) => {
-            let spNode = new cc.Node();
-            let sp = spNode.addComponent(cc.Sprite)
-            sp.spriteFrame = element;
-            spNode.scale = 0.5;
-            spNode.position = pos[index];
-            spNode.parent = this.beautyNode;
-        });
-        
-
     }
     _createSphere (x, y, r, node) {
         if (!node) {
