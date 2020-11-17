@@ -1,5 +1,3 @@
-const {ccclass} = cc._decorator;
-
 /**
  * 1）遇到障碍的时候，设置AI跳过障碍的概率为A；
  * 2）区域判定：判断AI周围X范围内有无敌人；
@@ -14,13 +12,44 @@ export interface AIConfig {
     aroundDistance?: number, //周围检测距离
 }
 
-@ccclass
+export const MAX_AI_LEVEL = 20;
+export const getAIConfigByLevel = (level:number) => {
+    level = Math.min(level,MAX_AI_LEVEL)
+    let a,y,z,x;
+    let weight = level/ MAX_AI_LEVEL;
+    a = weight;
+    y = weight;
+    z = weight;
+    x = level * 10;
+
+    return {
+        barrierPosibility: a,
+        firstPeriodSkillPosibility: y,
+        secondPeriodSkillPosibility: z,
+        aroundDistance: x
+    }
+}
 export default class AIHelper extends cc.Component {
 
-    hasEnemy(player:cc.Node, otherPlayers:[cc.Node],distance:number){
+    public config: AIConfig = null
+    shouldJumpWhenBlocked(){
+        let ran = Math.random();
+        return ran < this.config.barrierPosibility
+    }
+    shouldUseSkill(player:cc.Node,mapLength:number){
+        let ran = Math.random();
+        let isPeriod1 = player.x < mapLength;
+        if(isPeriod1) {
+            return ran < this.config.firstPeriodSkillPosibility;
+        } else {
+            return ran < this.config.secondPeriodSkillPosibility;
+        }
+    }
+    hasEnemyAround(player:cc.Node, otherPlayers:[cc.Node]){
         let has = otherPlayers.some(e => {
             let offset = player.position.sub(e.position);
-            return offset.mag() < distance
+            let tmp = player.width/2+e.width/2;
+            return offset.mag() < (this.config.aroundDistance + tmp);
         });
         return has
     }

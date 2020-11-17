@@ -12,7 +12,8 @@ export interface SkillEffect{
 export interface SkillConfig {
     name: string,
     spinePath?: string,
-    effect?: SkillEffect 
+    effect?: SkillEffect,
+    cd?: number // 秒
 }
 
 export interface SkinBody{
@@ -46,7 +47,8 @@ export const SkinMapping = {
         ],
         skill: {
             name:'spider',
-            spinePath: 'spines/spider/spider'
+            spinePath: 'spines/spider/spider',
+            cd: 10
         },
         bundleName:'resources'
     }

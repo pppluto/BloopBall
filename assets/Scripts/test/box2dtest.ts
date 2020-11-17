@@ -26,7 +26,7 @@ export default class LiquidBox2dTest extends cc.Component {
         const phyMgr = cc.director.getPhysicsManager();
         phyMgr.enabled = true;
         phyMgr.debugDrawFlags = 
-        0;
+        // 0;
         cc.PhysicsManager.DrawBits.e_aabbBit |
         cc.PhysicsManager.DrawBits.e_jointBit |
         cc.PhysicsManager.DrawBits.e_shapeBit

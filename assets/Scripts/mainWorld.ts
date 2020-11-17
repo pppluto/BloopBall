@@ -248,6 +248,7 @@ export default class MainWorld extends cc.Component{
         let vfmtColor = new gfx.VertexFormat([
             { name: gfx.ATTR_POSITION, type: gfx.ATTR_TYPE_FLOAT32, num: 2 },
             { name: gfx.ATTR_UV0, type: gfx.ATTR_TYPE_FLOAT32, num: 2 },
+            // { name: gfx.ATTR_NORMAL,type: gfx.ATTR_TYPE_FLOAT32, num: 2 }
         ]);
         mesh.init(vfmtColor,8,false);
     
@@ -353,12 +354,12 @@ export default class MainWorld extends cc.Component{
 
         let numberOfSlices = hillWidth/pixelStep;
 
-        let j;
+        let j = 0;
 
         //TODO: 这里生成的点需要测试确定y不会溢出
 
         // first step
-        let randomHeight;
+        let randomHeight = 0;
         if (xOffset === 0) {
             randomHeight = 0;
             this._meshPoints.push(cc.v2(xOffset,0))

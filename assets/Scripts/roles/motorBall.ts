@@ -76,6 +76,16 @@ export default class Ball extends cc.Component {
         // let body =  this._createSphere(0, 0, this.centerSize,null);
         // body.node.parent = this.node;
         let body = this.node.getComponent(cc.RigidBody);
+      
+        //无弹性效果
+        if(cc.sys.os === 'iOS') {
+            ///
+        }
+        let collider = this.node.getComponent(cc.PhysicsCircleCollider);
+        collider.radius = this.centerSize + 2 * this.sphereSize;
+        collider.apply();
+        particleNumber = 0;
+
         spheres.push(body);
 
         let aroundDistance = getThirdEdge(sphereSize,this.centerSize,particleAngle);
@@ -150,6 +160,13 @@ export default class Ball extends cc.Component {
     drawBody(spriteFrame){
         this.bodySpriteFrame = spriteFrame;
         if (spriteFrame) {
+
+            //牺牲一些效果
+            if(this.spheres.length === 1) {
+                this.createBodyNode(spriteFrame)
+                return;
+            }
+
             let newTexture = spriteFrame.getTexture();
             if (newTexture && newTexture.loaded) {
                 this.onSpriteFrameLoaded();
@@ -157,6 +174,14 @@ export default class Ball extends cc.Component {
                 spriteFrame.once('load', this.onSpriteFrameLoaded, this);
             }
         }
+    }
+    createBodyNode(spriteFrame){
+        let spNode = new cc.Node();
+        let size = this.sphereSize * 4 + this.centerSize * 2;
+        let sp = spNode.addComponent(cc.Sprite)
+        sp.spriteFrame = spriteFrame;
+        spNode.parent = this.node;
+        spNode.scale = size / spriteFrame.getTexture().width
     }
     createBeautifyNode(sprites,bodies:Array<SkinBody>){
         let posEye = cc.v3(0,this.sphereSize,0);
@@ -331,6 +356,7 @@ export default class Ball extends cc.Component {
         body.applyTorque(-300,true);
     }
     update (dt) {
+        if(this.spheres.length < 2) return;
         this.updateMeshVertex();
         // let body = this.spheres[0];
         // if(!body) return;

@@ -2123,7 +2123,9 @@
   },
   {
     "__type__": "cc.ClickEvent",
-    "target": null,
+    "target": {
+      "__id__": 20
+    },
     "component": "",
     "_componentId": "3173eEyTbpMb7CnnHkCcCXj",
     "handler": "restart",

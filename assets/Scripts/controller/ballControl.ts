@@ -1,5 +1,8 @@
 import {TagType}from '../mainWorld'
 import GameControl from './gameControl'
+import {SkillConfig} from '../roles/RoleMapping'
+import SkillHost from '../roles/skillHost'
+import AIHelper, { AIConfig,getAIConfigByLevel } from '../roles/AI'
 const {ccclass, property} = cc._decorator;
 
 @ccclass
@@ -15,6 +18,9 @@ export default class BallController extends cc.Component{
     body: cc.RigidBody = null;
     gameMgr: GameControl = null;
     _collideCount: number = 0;
+    skillConfig: SkillConfig = null;
+    aiHelper: AIHelper = null
+    preTriggerTS: number = 0;
 
     onLoad() {
 
@@ -23,9 +29,14 @@ export default class BallController extends cc.Component{
     init(){
         this.prePressTS = 0;
         if(this.isAI) {
+            let helper = new AIHelper();
+            helper.config = getAIConfigByLevel(this.AILevel)
+            this.aiHelper = helper;
+
             let interval = 3;
             this.schedule(this.autoJump, interval);
-            return;
+
+            //TODO: 技能释放
         };
 
     }
@@ -42,7 +53,31 @@ export default class BallController extends cc.Component{
         rigid.applyLinearImpulse(cc.v2(2000,randomY),center,true);
 
     }
+    skillAvaliable(){
+        let now = new Date().getTime();
+        let cd = this.skillConfig.cd * 1000;
+        return !cd || now - this.preTriggerTS > cd;
+    }
+    triggerSkill(){
+        if(!this.skillAvaliable()){
+            console.log('技能冷却中');
+            return;
+        }
+        this.preTriggerTS = new Date().getTime();
+
+        let node = new cc.Node();
+        node.setPosition(this.node.position);
+        node.parent = this.node.parent;
+        let host = node.addComponent(SkillHost);
+        host.skillConfig = this.skillConfig
+        host.trigger = this.node;
+        host.useSkill();
+    }
+    //TODO:根据质量确定力，扭矩的大小
     jump(){
+        if(this._collideCount <= 0) {
+            return;
+        }
         let body = this.body;
         let center = body.getWorldCenter();
         let mass = body.getMass()
@@ -65,7 +100,8 @@ export default class BallController extends cc.Component{
             force += 100;
         }
         let body = this.body;
-        body.applyTorque(force,true);
+        let m = body.getMass()
+        body.applyTorque(m * 32 * force / 100,true);
     }
     disableSchedule(){
         this.unschedule(this.autoJump)
@@ -109,13 +145,32 @@ export default class BallController extends cc.Component{
         this.jump()
     }
 
-    jumpIfNeed() {
-        this.onUpPress();
+    jumpWhenBlocked() {
+        if(this.aiHelper.shouldJumpWhenBlocked()) {
+            this.jump();
+        }
+    }
+    aroundCheck(){
+        return;
+        if(!this.skillAvaliable()){
+            return;
+        }
+        let otherballs = <any>this.gameMgr.balls.filter(v => v.position.sub(this.node.position).mag() > 10);
+        let has = this.aiHelper.hasEnemyAround(this.node,otherballs);
+        let mapLength = this.gameMgr.getMapLength()
+        if(has && this.aiHelper.shouldUseSkill(this.node,mapLength)){
+            this.triggerSkill()
+        }
+        //TODO:范围检测，技能，特殊障碍，放这里
     }
 
     //中心刚体碰撞
     onBeginContact (contact, selfCollider, otherCollider) {
         //只计算地面，空中平台
+        let otherGroup = otherCollider.node.group
+        if(otherGroup ==='ground' || otherGroup ==='block' ){
+            this._collideCount += 1;
+        }
 
         if(otherCollider.tag === TagType.FINAL_TAG){
             console.log('****',this.isAI ? 'AI finish' :'player finish');
@@ -139,6 +194,11 @@ export default class BallController extends cc.Component{
     // 只在两个碰撞体结束接触时被调用一次
     onEndContact (contact, selfCollider, otherCollider) {
         //只计算地面，空中平台
+        let otherGroup = otherCollider.node.group
+        if(otherGroup ==='ground' || otherGroup ==='block' ){
+            this._collideCount -= 1;
+        }
+        
         if(otherCollider.tag === TagType.FINAL_TAG){
             console.log('*************endcontact',this.isAI)
         }
@@ -165,6 +225,7 @@ export default class BallController extends cc.Component{
         let otherGroup = otherCollider.node.group
         if(otherGroup ==='ground' || otherGroup ==='block' ){
             this._collideCount += 1;
+            this.jumpWhenBlocked();
         }
     }
     onAroundEndContact (contact, selfCollider, otherCollider) {
@@ -191,6 +252,10 @@ export default class BallController extends cc.Component{
         // if(this._finished) return;
 
         this.applyForce();
+
+        if(this.isAI){
+            this.aroundCheck()
+        }
 
         // if(this.buffState === TagType.DEBUFF_TAG) {
         //     let velocity = this.body.linearVelocity;

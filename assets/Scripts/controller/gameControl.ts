@@ -9,7 +9,8 @@ cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
    
     //减少物理计算步长/迭代次数
     // physicsManager.enabledAccumulator = true;
-    // physicsManager['FIXED_TIME_STEP'] = 1/20;
+    // physicsManager['MAX_ACCUMULATOR'] = 1/5 //给物理系统计算的时间
+    // physicsManager['FIXED_TIME_STEP'] = 1/24;
     // physicsManager['VELOCITY_ITERATIONS'] = 5;
     // physicsManager['POSITION_ITERATIONS'] = 5;
    
@@ -75,6 +76,12 @@ export default class NewClass extends cc.Component {
             // const phyMgr = cc.director.getPhysicsManager();
             // phyMgr.gravity = cc.v2(2 * 32,-10 * 32);
         },3);
+        let interval = 2;
+        let delay = 3;
+        this.schedule(this.autoUseSkill,interval,cc.macro.REPEAT_FOREVER,delay)
+    }
+    onDestroy(){
+        this.unscheduleAllCallbacks();
     }
     onKeyDown (event) {
         console.log('keydow')
@@ -93,7 +100,7 @@ export default class NewClass extends cc.Component {
         let player = this.balls[0];
         if(player){
             let bc = player.getComponent('ballControl')
-            bc.jumpIfNeed();
+            bc.onUpPress();
         }
     }
     startGame(){
@@ -125,29 +132,34 @@ export default class NewClass extends cc.Component {
     }
     autoUseSkill(){
         let otherPlayers = this.balls.slice(1);
+        let random = Math.floor(Math.random() * otherPlayers.length);
+        let randomPlayer = otherPlayers[random];
+        this.useSkillWithPlayer(randomPlayer)
     }
     useSkill(){
         let player = this.balls[0];
         if(!player) return;
-
-        let node = new cc.Node();
-        node.setPosition(player.position);
-        node.parent = this.mainWorld;
-        let host = node.addComponent(SkillHost);
-        host.skillConfig = SkinMapping['spider'].skill;
-        host.trigger = player;
-        host.useSkill();
+        this.useSkillWithPlayer(player)
+       
+    }
+    useSkillWithPlayer(player){
+        let playerCtr = player.getComponent('ballControl');
+        playerCtr.triggerSkill()
+        
     }
     prepareBalls(){
         let player_num = 4;
         let yPosition = 300;
         let xPosition = 400;
+        this.balls = [];
         for (let index = 0; index < player_num; index++) {
             let otherPlayer = cc.instantiate(this.motorBall);
             let ball = otherPlayer.getComponent('motorBall');
             //先确定位置，不然初始化时，会因为堆在一起产生碰撞效果
             ball.initWithPosition(cc.v2( xPosition + (index + 1) * 100, yPosition ));
-            ball.skinConfig = SkinMapping['spider'];
+
+            let skinConfig = SkinMapping['spider'];
+            ball.skinConfig = skinConfig
             this.mainWorld.addChild(otherPlayer);
             ball.enableContact = index === 0;
             ball.prepare()
@@ -156,6 +168,7 @@ export default class NewClass extends cc.Component {
             bControl.gameMgr = this;
             bControl.isAI = index !== 0;
             bControl.AILevel = index;
+            bControl.skillConfig = skinConfig.skill;
             this.balls.push(otherPlayer);
             bControl.init();
 
@@ -164,6 +177,11 @@ export default class NewClass extends cc.Component {
                 playerC.target = otherPlayer;
             }
         }
+    }
+    getMapLength(){
+        let mainWorld = this.mainWorld.getComponent('mainWorld');
+        let endmark = mainWorld.mapLength;
+        return endmark;
     }
     drawCircle(x,r,color){
         x = Math.min(300,x);
@@ -184,9 +202,8 @@ export default class NewClass extends cc.Component {
     }
     drawProgress(){
         if(!this.ctx) return;
-        let mainWorld = this.mainWorld.getComponent('mainWorld');
         let balls = this.balls;
-        let endmark = mainWorld.mapLength;
+        let endmark = this.getMapLength();
         if(!balls || !balls.length) return;
 
         let user = balls[0];
