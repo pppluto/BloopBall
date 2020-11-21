@@ -41,6 +41,8 @@ export default class Ball extends cc.Component {
 
     skinConfig: SKinConfig = null// SkinMapping.spider
     skinSpritesCache: cc.Asset | cc.Asset[] = []
+
+    isAI: boolean = false;
     // use this for initialization
     onLoad(){
         // this.prepare();
@@ -78,13 +80,12 @@ export default class Ball extends cc.Component {
         let body = this.node.getComponent(cc.RigidBody);
       
         //无弹性效果
-        if(cc.sys.os === 'iOS') {
-            ///
+        if( true || cc.sys.os === 'iOS') {
+            let collider = this.node.getComponent(cc.PhysicsCircleCollider);
+            collider.radius = this.centerSize + 2 * this.sphereSize;
+            collider.apply();
+            particleNumber = 0;
         }
-        let collider = this.node.getComponent(cc.PhysicsCircleCollider);
-        collider.radius = this.centerSize + 2 * this.sphereSize;
-        collider.apply();
-        particleNumber = 0;
 
         spheres.push(body);
 
@@ -184,22 +185,19 @@ export default class Ball extends cc.Component {
         spNode.scale = size / spriteFrame.getTexture().width
     }
     createBeautifyNode(sprites,bodies:Array<SkinBody>){
-        let posEye = cc.v3(0,this.sphereSize,0);
         let edge = this.sphereSize + this.motorOffset;
-        let posTail = cc.v3(edge-10,10,0).mul(-1);
-        let posHair = cc.v3(0,edge,0);
-        let pos = [cc.Vec3.ZERO,posEye,posHair,posTail];
         sprites.forEach((element,index) => {
             if(index === 0) {
                 this.drawBody(element)
                 return;
             }
+            if(this.isAI) return;
             let body = bodies[index];
             let spNode = new cc.Node();
             let sp = spNode.addComponent(cc.Sprite)
             sp.spriteFrame = element;
             spNode.scale = 0.5;
-            spNode.position = pos[index];
+            spNode.position = cc.v3(edge * body.x,edge * body.y,0)
             if(body.isBack){
                 spNode.parent = this.beautyBackNode;
 

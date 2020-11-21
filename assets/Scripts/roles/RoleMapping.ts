@@ -7,6 +7,7 @@ export interface SkillEffect{
     /**
     ....
      */
+    range?: [number,number], //作用范围 [0,3] //改成单位(球)
     duration?: number
 }
 export interface SkillConfig {
@@ -16,6 +17,9 @@ export interface SkillConfig {
     cd?: number // 秒
 }
 
+/**
+ * x,y: clip space -1 -> 1
+ */
 export interface SkinBody{
     name: string, //资源名
     x?: number,
@@ -41,14 +45,17 @@ export const SkinMapping = {
         name: 'spider',
         bodies: [
             {name:'body'},
-            {name:'eye',x: 0,y: 0.5},
-            {name:'hair',x: 0,y: 0.8},
-            {name:'tail',x: -1,y: 0.5,isBack:true},
+            {name:'eye',x: 0,y: 0.2},
+            {name:'hair',x: 0,y: 1.0},
+            {name:'tail',x: -0.9,y: -0.4,isBack:true},
         ],
         skill: {
             name:'spider',
             spinePath: 'spines/spider/spider',
-            cd: 10
+            cd: 2,
+            effect: {
+                range: [0,200]
+            }
         },
         bundleName:'resources'
     }

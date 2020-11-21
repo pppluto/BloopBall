@@ -24,25 +24,25 @@ export const BarrierMapping = {
         name: 'poo',
         type: BarrierType.STATIC,
         prebafPath: 'barrier/poo',
-        bundleName:'prefabs'
+        bundleName:'resources'
     },
     cactus: {
         name: 'cactus',
         type: BarrierType.STATIC,
         prebafPath: 'barrier/cactus',
-        bundleName:'prefabs'
+        bundleName:'resources'
     },
     smallAirBlock:{
         name: 'smallAB',
         type: BarrierType.STATIC,
         prebafPath: 'barrier/block1',
-        bundleName:'prefabs'
+        bundleName:'resources'
     },
     bigAirBlock:{
         name: 'bigAB',
         type: BarrierType.STATIC,
         prebafPath: 'barrier/block2',
-        bundleName:'prefabs'
+        bundleName:'resources'
     }
 }
 

@@ -6,7 +6,7 @@ if (cc.sys.platform === cc.sys.BYTEDANCE_GAME) {
 }
 const generateUUID = () => {
   let ts = new Date().getTime();
-  let sub = String(ts).substr(-16);
+  let sub = String(ts);
   let randomTail = Math.floor(Math.random() * 10000);
   let uuid = sub + randomTail;
   return uuid;
@@ -47,16 +47,13 @@ class Statistics {
     if (platformCtx) {
       platformCtx.onShow((res) => {
         let { scene } = res;
-        console.log('程序回到前台', res);
         this.trackEvent('gameShow', { wxScene: scene });
       });
       platformCtx.onHide((res) => {
-        console.log('程序到后台', res);
         this.trackEvent('gameHide');
       });
       platformCtx.onError((err) => {
         let { message, stack } = err;
-        console.log('程序错误', message, stack);
         this.trackEvent('gameError', { message, stack });
       });
       platformCtx.onMemoryWarning((res) => {
@@ -86,7 +83,6 @@ class Statistics {
           benchmarkLevel,
           system,
         };
-        console.log('stat init', this.sysInfo);
       } catch (e) {
         // Do something when catch error
       }
@@ -119,6 +115,7 @@ class Statistics {
     this.uploadStat(eventName, extraInfo);
   }
   uploadStat(eventName, extraInfo = {}) {
+    return;
     if (!eventName) {
       console.warn('stat should has eventName');
       return;

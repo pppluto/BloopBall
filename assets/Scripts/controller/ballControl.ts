@@ -3,6 +3,7 @@ import GameControl from './gameControl'
 import {SkillConfig} from '../roles/RoleMapping'
 import SkillHost from '../roles/skillHost'
 import AIHelper, { AIConfig,getAIConfigByLevel } from '../roles/AI'
+import Storage from '../common/Storage'
 const {ccclass, property} = cc._decorator;
 
 @ccclass
@@ -20,7 +21,12 @@ export default class BallController extends cc.Component{
     _collideCount: number = 0;
     skillConfig: SkillConfig = null;
     aiHelper: AIHelper = null
-    preTriggerTS: number = 0;
+    preSkillTriggerTS: number = 0;
+    preBehaveTS: number = 0;
+
+    //TODO: 期望改成 map 结构，或者2进制做与或操作来判断
+    // flagStateMap: Map<string,any> = new Map()
+    stateFlag: string = null;
 
     onLoad() {
 
@@ -30,15 +36,20 @@ export default class BallController extends cc.Component{
         this.prePressTS = 0;
         if(this.isAI) {
             let helper = new AIHelper();
-            helper.config = getAIConfigByLevel(this.AILevel)
+            // helper.config = getAIConfigByLevel(this.AILevel)
+            helper.config = Storage.getItem(Storage.aiConfigKey)
             this.aiHelper = helper;
 
-            let interval = 3;
-            this.schedule(this.autoJump, interval);
-
-            //TODO: 技能释放
+            let interval = helper.config.behaveInterval || 2;
+            this.schedule(this.autoControl, interval);
         };
 
+    }
+    updateAIConfig(){
+        if(!this.aiHelper) return;
+        let config = Storage.getItem(Storage.aiConfigKey);
+        console.log('update',config)
+        this.aiHelper.config = config
     }
     start () {
         let ballJS = this.getComponent('motorBall');
@@ -46,7 +57,8 @@ export default class BallController extends cc.Component{
     }
     startGame (){
         this.gameStart = true;
-        let randomY = Math.round(Math.random() * 100);
+        return;
+        let randomY = Math.round(Math.random() * 30);
         // this.applyForce(cc.v2(300,randomY));
         let rigid = this.body;
         let center = rigid.getWorldCenter()
@@ -56,15 +68,13 @@ export default class BallController extends cc.Component{
     skillAvaliable(){
         let now = new Date().getTime();
         let cd = this.skillConfig.cd * 1000;
-        return !cd || now - this.preTriggerTS > cd;
+        return !cd || now - this.preSkillTriggerTS > cd;
     }
     triggerSkill(){
         if(!this.skillAvaliable()){
-            console.log('技能冷却中');
             return;
         }
-        this.preTriggerTS = new Date().getTime();
-
+        this.preSkillTriggerTS = new Date().getTime();
         let node = new cc.Node();
         node.setPosition(this.node.position);
         node.parent = this.node.parent;
@@ -101,18 +111,28 @@ export default class BallController extends cc.Component{
         }
         let body = this.body;
         let m = body.getMass()
-        body.applyTorque(m * 32 * force / 100,true);
+        body.applyTorque(m * force,true);
     }
     disableSchedule(){
-        this.unschedule(this.autoJump)
+        this.unschedule(this.autoControl)
     }
-    autoJump() {
-        let AILevel = this.AILevel;
-        let random = 1 / AILevel;
-        let shouldJump = Math.random() < random;
-        if(shouldJump){
-            this.jump();
+    autoControl() {
+
+        let now = new Date().getTime()
+        this.preBehaveTS = now;
+        console.log('jump',this.stateFlag)
+
+        if(this.stateFlag === 'block') {
+           this.jumpWhenBlocked()
         }
+
+        this.aroundCheck();
+
+        //TODO:拿到周围障碍信息
+
+    }
+    showDebugInfo(msg){
+        this.gameMgr.showDebug(msg);
     }
     // jump(){
     //     if(this._finished) return;
@@ -146,20 +166,36 @@ export default class BallController extends cc.Component{
     }
 
     jumpWhenBlocked() {
-        if(this.aiHelper.shouldJumpWhenBlocked()) {
-            this.jump();
+        if(this.aiHelper){
+            let jump =  this.aiHelper.shouldJumpWhenBlocked();
+            let tmp = jump?'选择跳过':'选择不跳过'
+            this.showDebugInfo('碰到障碍,'+tmp);
+            if(jump){
+                this.jump();
+            }
         }
     }
     aroundCheck(){
-        return;
-        if(!this.skillAvaliable()){
-            return;
-        }
+        // return;
+        // 先检查cd,会快一点，放下面方便调试
+        // if(!this.skillAvaliable()){
+        //     this.showDebugInfo('技能未准备好')
+        //     return;
+        // }
         let otherballs = <any>this.gameMgr.balls.filter(v => v.position.sub(this.node.position).mag() > 10);
-        let has = this.aiHelper.hasEnemyAround(this.node,otherballs);
-        let mapLength = this.gameMgr.getMapLength()
-        if(has && this.aiHelper.shouldUseSkill(this.node,mapLength)){
+        let has = this.aiHelper.hasEnemyInSkill(this.node,otherballs,this.skillConfig.effect);
+        let mapLength = this.gameMgr.getMapLength();
+        let shouldTrigger = this.aiHelper.shouldUseSkill(this.node,mapLength);
+        if(has && shouldTrigger){
+            if(!this.skillAvaliable()){
+                this.showDebugInfo('技能未准备好')
+                return;
+            }
+            this.showDebugInfo('使用技能')
             this.triggerSkill()
+        } else {
+            let tmp = has?'周围有敌人，不使用技能':'周围无敌人';
+            this.showDebugInfo(tmp)
         }
         //TODO:范围检测，技能，特殊障碍，放这里
     }
@@ -170,6 +206,10 @@ export default class BallController extends cc.Component{
         let otherGroup = otherCollider.node.group
         if(otherGroup ==='ground' || otherGroup ==='block' ){
             this._collideCount += 1;
+            if(otherGroup === 'block'){
+                // this.jumpWhenBlocked();
+                this.stateFlag = otherGroup;
+            }
         }
 
         if(otherCollider.tag === TagType.FINAL_TAG){
@@ -197,6 +237,9 @@ export default class BallController extends cc.Component{
         let otherGroup = otherCollider.node.group
         if(otherGroup ==='ground' || otherGroup ==='block' ){
             this._collideCount -= 1;
+            if(otherGroup === 'block'){
+                this.stateFlag = '';
+            }
         }
         
         if(otherCollider.tag === TagType.FINAL_TAG){
@@ -225,7 +268,9 @@ export default class BallController extends cc.Component{
         let otherGroup = otherCollider.node.group
         if(otherGroup ==='ground' || otherGroup ==='block' ){
             this._collideCount += 1;
-            this.jumpWhenBlocked();
+            if(otherGroup === 'block'){
+                this.stateFlag = otherGroup;
+            }
         }
     }
     onAroundEndContact (contact, selfCollider, otherCollider) {
@@ -239,6 +284,9 @@ export default class BallController extends cc.Component{
         let otherGroup = otherCollider.node.group
         if(otherGroup ==='ground' || otherGroup ==='block' ){
             this._collideCount -= 1;
+            if(otherGroup === 'block'){
+                this.stateFlag = '';
+            }
         }
     }
     winGame(){
@@ -251,11 +299,6 @@ export default class BallController extends cc.Component{
         if(!this.gameStart) return;
         // if(this._finished) return;
 
-        this.applyForce();
-
-        if(this.isAI){
-            this.aroundCheck()
-        }
 
         // if(this.buffState === TagType.DEBUFF_TAG) {
         //     let velocity = this.body.linearVelocity;
@@ -273,6 +316,7 @@ export default class BallController extends cc.Component{
         // } 
 
         let velocity = this.body.linearVelocity;
+        let angularV = this.body.angularVelocity;
 
         if(this.node.y > 600){
             this.node.y = 600;
@@ -280,14 +324,19 @@ export default class BallController extends cc.Component{
             this.body.linearVelocity = cc.v2(velocity.x,0);
 
         }
-        //不能直接修改速度，可能导致球滑行
+
+        if(angularV < 600) {
+            this.applyForce();
+        }
+       
+        // //不能直接修改速度，可能导致球滑行
         if(velocity.x <= this.minXSpeed){
             this.body.linearVelocity = cc.v2(this.minXSpeed,velocity.y);
         }
 
         if(this.buffState === TagType.DEBUFF_TAG) {
             this.body.linearVelocity = cc.v2(20,20);
-            this.body.angularVelocity = this.body.angularVelocity/2
+            this.body.angularVelocity = angularV / 2
         }
     }
 }

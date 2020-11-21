@@ -8,6 +8,7 @@ import { BarrierHost } from './barrier/barrierHost';
 const MIN_HEIGHT = 100;
 const MAX_HEIGHT = 250;
 
+//TODO:改成 enum TagType，这样写拿不到类型
 export const TagType = cc.Enum({
     FINAL_TAG: 99,
     DIE_TAG: 88,
@@ -25,8 +26,6 @@ export default class MainWorld extends cc.Component{
     //map config
     @property(cc.Float)
     pixelStep: number = 10
-    @property(cc.Float)
-    mapLength: number = 4000
     @property(cc.SpriteFrame)
     sf: cc.SpriteFrame = null;
     @property(cc.SpriteFrame)
@@ -42,7 +41,8 @@ export default class MainWorld extends cc.Component{
     //mark prefabs
     @property(cc.Prefab)
     flag: cc.Prefab = null;
-
+    
+    mapLength: number = 15000;
     hills: Array<any> = [];
     pools: Array<any> = [];
     playerFinish: boolean = false;
@@ -345,7 +345,8 @@ export default class MainWorld extends cc.Component{
         let yOffset = this.yOffset;
 
         //每一小段地形的长度
-        let hillWidth = 120 + Math.ceil(Math.random()*26)*20;
+        // let hillWidth = 120 + Math.ceil(Math.random()*26)*20;
+        let hillWidth = 120 + 13 * 20;
 
         //开始结束平面
         if(xOffset === 0 ) {
@@ -461,7 +462,7 @@ export default class MainWorld extends cc.Component{
                let tmp = Math.random() > 0.5;
                let preX = ePoint.x - 10;
                let preY = this.getMaxPosWithXOffset(preX);
-               if(tmp){
+               if(true||tmp){
                    this.generateGroundBarrier(ePoint,cc.v2(preX,preY))
                } else {
                    this.generateAirBarrier(ePoint)

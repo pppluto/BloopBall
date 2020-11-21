@@ -1,7 +1,8 @@
 // http://www.emanueleferonato.com/2011/10/04/create-a-terrain-like-the-one-in-tiny-wings-with-flash-and-box2d-%E2%80%93-adding-more-bumps/
 import SkillHost from '../roles/skillHost'
 import { SkinMapping } from '../roles/RoleMapping'
-
+import Storage from '../common/Storage'
+import AIHelper,{getAIConfigByLevel} from '../roles/AI';
 
 cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
     let physicsManager = cc.director.getPhysicsManager();
@@ -60,12 +61,27 @@ export default class NewClass extends cc.Component {
 
 
     balls: Array<cc.Node> = [];
+    playerIndex: number;
     playerRank: number = 1;
     playerFinish: boolean = false;
 
+    @property(cc.Label)
+    disLabel: cc.Label=null
+    @property(cc.Label)
+    barrierLabel: cc.Label=null
+    @property(cc.Label)
+    skillLabel: cc.Label=null
+    @property(cc.Label)
+    skillLabel2: cc.Label=null
+    @property(cc.Label)
+    debugLabel: cc.Label=null
+
+    debugInfoList: [string] = ['']
+    debugCount: number = 0;
     onLoad () {
         this.ctx.lineCap = cc.Graphics.LineCap.ROUND;
         this.gameBoard.active = false;
+        this.loadConfig()
 
         cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, this.onKeyDown, this);
         cc.systemEvent.on(cc.SystemEvent.EventType['TOUCH_START'], this.onTouchStart, this);
@@ -73,12 +89,10 @@ export default class NewClass extends cc.Component {
         // return
         this.scheduleOnce(() => {
             this.startGame();
-            // const phyMgr = cc.director.getPhysicsManager();
-            // phyMgr.gravity = cc.v2(2 * 32,-10 * 32);
+            const phyMgr = cc.director.getPhysicsManager();
+            phyMgr.gravity = cc.v2(0,-15 * 32);//重力高一些
         },3);
-        let interval = 2;
-        let delay = 3;
-        this.schedule(this.autoUseSkill,interval,cc.macro.REPEAT_FOREVER,delay)
+
     }
     onDestroy(){
         this.unscheduleAllCallbacks();
@@ -97,7 +111,7 @@ export default class NewClass extends cc.Component {
         this.onUpPress();
     }
     onUpPress(){
-        let player = this.balls[0];
+        let player = this.balls[this.playerIndex];
         if(player){
             let bc = player.getComponent('ballControl')
             bc.onUpPress();
@@ -131,50 +145,55 @@ export default class NewClass extends cc.Component {
         cc.director.loadScene('Main');
     }
     autoUseSkill(){
-        let otherPlayers = this.balls.slice(1);
-        let random = Math.floor(Math.random() * otherPlayers.length);
-        let randomPlayer = otherPlayers[random];
+        let players = this.balls.filter((_,v) => v !== this.playerIndex)
+        let random = Math.floor(Math.random() * players.length);
+        let randomPlayer = players[random];
         this.useSkillWithPlayer(randomPlayer)
     }
     useSkill(){
-        let player = this.balls[0];
-        if(!player) return;
+        let player = this.balls[this.playerIndex];
         this.useSkillWithPlayer(player)
        
     }
     useSkillWithPlayer(player){
+        if(!player) return;
+
         let playerCtr = player.getComponent('ballControl');
         playerCtr.triggerSkill()
         
     }
     prepareBalls(){
-        let player_num = 4;
+        let player_num = 2;
         let yPosition = 300;
         let xPosition = 400;
         this.balls = [];
+        let userIndex = Math.floor(Math.random() * player_num);
+        this.playerIndex = userIndex;
         for (let index = 0; index < player_num; index++) {
-            let otherPlayer = cc.instantiate(this.motorBall);
-            let ball = otherPlayer.getComponent('motorBall');
+            let player = cc.instantiate(this.motorBall);
+            let ball = player.getComponent('motorBall');
             //先确定位置，不然初始化时，会因为堆在一起产生碰撞效果
             ball.initWithPosition(cc.v2( xPosition + (index + 1) * 100, yPosition ));
 
+            let isAI = index !==  userIndex;
             let skinConfig = SkinMapping['spider'];
             ball.skinConfig = skinConfig
-            this.mainWorld.addChild(otherPlayer);
-            ball.enableContact = index === 0;
+            this.mainWorld.addChild(player);
+            ball.enableContact = true;
+            ball.isAI = isAI
             ball.prepare()
             
-            let bControl = otherPlayer.getComponent('ballControl')
+            let bControl = player.getComponent('ballControl')
             bControl.gameMgr = this;
-            bControl.isAI = index !== 0;
+            bControl.isAI = isAI;
             bControl.AILevel = index;
             bControl.skillConfig = skinConfig.skill;
-            this.balls.push(otherPlayer);
+            this.balls.push(player);
             bControl.init();
 
-            if(index === 0){
+            if(!isAI){
                 let playerC = this.playerCamera.getComponent('camera-control');
-                playerC.target = otherPlayer;
+                playerC.target = player;
             }
         }
     }
@@ -216,12 +235,98 @@ export default class NewClass extends cc.Component {
         this.drawLine(0,300,color)
         this.drawLine(0,userX,cc.Color.ORANGE)
        
-        balls.slice(1).forEach(element => {
+        balls.forEach((element,index) => {
             let x =  element.x / endmark * progressBarLen;
-            this.drawCircle(x,4,cc.Color.YELLOW)
+            if(index === this.playerIndex){
+                this.drawCircle(userX,8,cc.Color.RED);
+            } else {
+                this.drawCircle(x,4,cc.Color.YELLOW)
+            }
         });
 
-        this.drawCircle(userX,8,cc.Color.RED);
+    }
+
+    /**
+     * for test
+     */
+    changeSlider(slider,flag){
+        flag = Number(flag)
+        switch(flag){
+            case 1:
+                this.changeDistance(slider.progress);
+                break;
+            case 2:
+                this.changeBarrierPosi(slider.progress)
+                break
+            case 3:
+                this.changePeriodFirst(slider.progress)
+                break
+            case 4:
+                this.changePeriodSecond(slider.progress)
+                break;
+
+        }
+    }
+    loadConfig(){
+        let key = 'ai_config';
+        let aiconfig = Storage.getItem(key);
+
+        if(!aiconfig){
+            aiconfig = getAIConfigByLevel(1);
+            Storage.saveItem(key,aiconfig)
+        }
+
+        this.disLabel.string = '范围'+aiconfig.aroundDistance;
+        this.barrierLabel.string = '跳过概率'+aiconfig.barrierPosibility;
+        this.skillLabel.string = '一阶段'+aiconfig.firstPeriodSkillPosibility;
+        this.skillLabel2.string = '二阶段'+aiconfig.secondPeriodSkillPosibility;
+
+    }
+    changeDistance(progress){
+        progress = Number(Math.round(progress * 100) / 100).toFixed(2);
+        let aroundDistance =  progress * 500;
+        this.updateAiConfig({aroundDistance});
+    }
+    changeBarrierPosi(progress){
+        progress = Number(Math.round(progress * 100) / 100).toFixed(2);
+
+        let barrierPosibility =  progress
+        this.updateAiConfig({barrierPosibility});
+    }
+    changePeriodFirst(progress){
+        progress = Number(Math.round(progress * 100) / 100).toFixed(2);
+
+        let firstPeriodSkillPosibility =  progress
+        this.updateAiConfig({firstPeriodSkillPosibility});
+    }
+    changePeriodSecond(progress){
+        progress = Number(Math.round(progress * 100) / 100).toFixed(2);
+
+        let secondPeriodSkillPosibility = progress
+        this.updateAiConfig({secondPeriodSkillPosibility});
+    }
+    updateAiConfig(config){
+        let key = Storage.aiConfigKey;
+        let aiconfig = Storage.getItem(key) || {}
+        Storage.saveItem(key,{...aiconfig,...config});
+        this.loadConfig();
+    }
+    showDebug(msg:string){
+        this.debugCount +=1;
+        let seq = '==seq:' + this.debugCount;
+        this.debugInfoList.push(msg+seq);
+        if(this.debugInfoList.length>4){
+            this.debugInfoList.shift();
+        }
+        this.debugLabel.string = this.debugInfoList.join('\n');
+    }
+    updateConfig(){
+        this.balls.forEach(b => {
+            let bcontrol = b.getComponent('ballControl');
+            if(bcontrol){
+                bcontrol.updateAIConfig();
+            }
+        })
     }
     update (dt) {
         this.drawProgress()

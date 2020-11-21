@@ -1,8 +1,7 @@
-const {ccclass} = cc._decorator;
-
-@ccclass
-export class Storage extends cc.Component {
+export default class Storage {
     private static _instance: Storage;
+
+    public static aiConfigKey = 'ai_config';
     public static get instance() {
         if (!this._instance) {
             this._instance = new Storage();
