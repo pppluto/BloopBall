@@ -311,8 +311,7 @@ export default class Ball extends cc.Component {
             let uvY =  0.5- (vertex.y - center.y) / radius / 2;
 
             uvs.push(cc.v2(uvX,uvY));
-            
-            ;
+
             if(index === 0){
 
             } else if(index === vertices.length -1){

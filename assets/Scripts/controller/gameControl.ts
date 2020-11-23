@@ -2,7 +2,7 @@
 import SkillHost from '../roles/skillHost'
 import { SkinMapping } from '../roles/RoleMapping'
 import Storage from '../common/Storage'
-import AIHelper,{getAIConfigByLevel} from '../roles/AI';
+import AIHelper,{getAIConfigByLevel} from '../helper/AI';
 
 cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
     let physicsManager = cc.director.getPhysicsManager();
@@ -121,7 +121,7 @@ export default class NewClass extends cc.Component {
         console.log('startgame');
         this.balls.forEach((b) => {
             let bControl = b.getComponent('ballControl');
-            bControl.gameMgr = this;
+            bControl.gameCtr = this;
             bControl.startGame();
         })
     }
@@ -184,7 +184,7 @@ export default class NewClass extends cc.Component {
             ball.prepare()
             
             let bControl = player.getComponent('ballControl')
-            bControl.gameMgr = this;
+            bControl.gameCtr = this;
             bControl.isAI = isAI;
             bControl.AILevel = index;
             bControl.skillConfig = skinConfig.skill;
@@ -268,7 +268,7 @@ export default class NewClass extends cc.Component {
         }
     }
     loadConfig(){
-        let key = 'ai_config';
+        let key =  Storage.AI_CONFIG_KEY;
         let aiconfig = Storage.getItem(key);
 
         if(!aiconfig){
@@ -306,7 +306,7 @@ export default class NewClass extends cc.Component {
         this.updateAiConfig({secondPeriodSkillPosibility});
     }
     updateAiConfig(config){
-        let key = Storage.aiConfigKey;
+        let key = Storage.AI_CONFIG_KEY;
         let aiconfig = Storage.getItem(key) || {}
         Storage.saveItem(key,{...aiconfig,...config});
         this.loadConfig();

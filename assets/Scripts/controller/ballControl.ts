@@ -2,7 +2,7 @@ import {TagType}from '../mainWorld'
 import GameControl from './gameControl'
 import {SkillConfig} from '../roles/RoleMapping'
 import SkillHost from '../roles/skillHost'
-import AIHelper, { AIConfig,getAIConfigByLevel } from '../roles/AI'
+import AIHelper, { AIConfig,getAIConfigByLevel } from '../helper/AI'
 import Storage from '../common/Storage'
 const {ccclass, property} = cc._decorator;
 
@@ -17,7 +17,7 @@ export default class BallController extends cc.Component{
     isAI: boolean = false;
     _finished: boolean = false;
     body: cc.RigidBody = null;
-    gameMgr: GameControl = null;
+    gameCtr: GameControl = null;
     _collideCount: number = 0;
     skillConfig: SkillConfig = null;
     aiHelper: AIHelper = null
@@ -37,7 +37,7 @@ export default class BallController extends cc.Component{
         if(this.isAI) {
             let helper = new AIHelper();
             // helper.config = getAIConfigByLevel(this.AILevel)
-            helper.config = Storage.getItem(Storage.aiConfigKey)
+            helper.config = Storage.getItem(Storage.AI_CONFIG_KEY)
             this.aiHelper = helper;
 
             let interval = helper.config.behaveInterval || 2;
@@ -47,7 +47,7 @@ export default class BallController extends cc.Component{
     }
     updateAIConfig(){
         if(!this.aiHelper) return;
-        let config = Storage.getItem(Storage.aiConfigKey);
+        let config = Storage.getItem(Storage.AI_CONFIG_KEY);
         console.log('update',config)
         this.aiHelper.config = config
     }
@@ -132,7 +132,7 @@ export default class BallController extends cc.Component{
 
     }
     showDebugInfo(msg){
-        this.gameMgr.showDebug(msg);
+        this.gameCtr.showDebug(msg);
     }
     // jump(){
     //     if(this._finished) return;
@@ -182,9 +182,9 @@ export default class BallController extends cc.Component{
         //     this.showDebugInfo('技能未准备好')
         //     return;
         // }
-        let otherballs = <any>this.gameMgr.balls.filter(v => v.position.sub(this.node.position).mag() > 10);
+        let otherballs = <any>this.gameCtr.balls.filter(v => v.position.sub(this.node.position).mag() > 10);
         let has = this.aiHelper.hasEnemyInSkill(this.node,otherballs,this.skillConfig.effect);
-        let mapLength = this.gameMgr.getMapLength();
+        let mapLength = this.gameCtr.getMapLength();
         let shouldTrigger = this.aiHelper.shouldUseSkill(this.node,mapLength);
         if(has && shouldTrigger){
             if(!this.skillAvaliable()){
@@ -292,7 +292,7 @@ export default class BallController extends cc.Component{
     winGame(){
         this._finished = true;
         this.disableSchedule();
-        this.gameMgr.playerWin(this.isAI);
+        this.gameCtr.playerWin(this.isAI);
     }
     update (dt) {
      

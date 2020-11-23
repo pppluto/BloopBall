@@ -5,7 +5,7 @@
  * 4） 综合调整A/X/Y/Z的参数来设置AI的聪明程度，设置AI等级，暂定为20个等级，等级越高，智能越高。
  */
 
-import { SkillEffect } from "./RoleMapping";
+import { SkillEffect } from "../roles/RoleMapping";
 
 export interface AIConfig {
     barrierPosibility: number, //障碍跳过概率

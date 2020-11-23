@@ -34,8 +34,19 @@ export interface SKinConfig {
     bundleName?: string //默认会是resources
 }
 
+export interface RoleDetail{
+    name: string,
+    bodies: SKinConfig[],
+    skill: SkillConfig,
+    bundleName: string
+}
 
-
+export interface Role{
+    name: string,//角色名，通过这个匹配对应皮肤和技能
+    id: number, //标记
+    cost: number, //解锁所需金币
+    image?: string
+}
 /**
  * 默认第一个body为主皮肤
  * 资源默认都放在resources bundle下
@@ -61,4 +72,25 @@ export const SkinMapping = {
     }
 }
 
- 
+export const RoleList:Role[] = [
+    {
+        name: 'spider',
+        id: 1,
+        cost: 0,
+    },
+    {
+        name: 'monkey',
+        id: 2,
+        cost: 100
+    },
+    {
+        name: 'tiger',
+        id: 3,
+        cost: 200
+    },
+    {
+        name: 'ironMan',
+        id: 4,
+        cost: 500
+    },
+]
