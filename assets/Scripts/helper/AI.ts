@@ -16,7 +16,7 @@ export interface AIConfig {
 }
 
 export const MAX_AI_LEVEL = 20;
-export const getAIConfigByLevel = (level:number) => {
+export const getAIConfigByLevel = (level:number):AIConfig => {
     level = Math.min(level,MAX_AI_LEVEL)
     let a,y,z,x;
     let weight = level/ MAX_AI_LEVEL;

@@ -24,7 +24,7 @@ export const getHighAINumByStreak = (streak) =>{
     return WinStreakAiConfig[streak] || 0;
 }
 
-export function getMatchByRank(rank):MatchConfig {
+export const getMatchByRank = (rank):MatchConfig =>{
     if(rank >= 500) {
         return RankMaps[-1];
     }
