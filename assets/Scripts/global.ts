@@ -1,7 +1,8 @@
-const {ccclass, property} = cc._decorator;
+import { Role } from "./roles/RoleMapping";
+export default class Global {
 
-@ccclass
-export class Global extends cc.Component {
+    public static roleUsed: Role;
+
     private static _instance: Global;
     public static get instance() {
         if (!this._instance) {
@@ -10,6 +11,5 @@ export class Global extends cc.Component {
         return this._instance;
     }
 
-    @property(cc.Float)
     _collideCount: number = 0
 }

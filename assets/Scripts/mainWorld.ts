@@ -386,8 +386,10 @@ export default class MainWorld extends cc.Component{
             points.push( cc.v2( pixelStep,nextY) );
             points.push( cc.v2( pixelStep, 0) );
 
+            //碰撞效果不对
+            let disable = true;
             //间隔开，并不影响物理效果，节省collider node
-            if(j % 2){
+            if(disable || j % 2){
                 this.generateTerrianPiece(xOffset+ j*pixelStep, points);
             }
 
@@ -425,9 +427,11 @@ export default class MainWorld extends cc.Component{
             points.push( cc.v2( pixelStep, nextY) );
             points.push( cc.v2( pixelStep, 0) );
 
-            if(j % 2){
+            let disable = true;
+            if(disable || j % 2){
                 this.generateTerrianPiece(xOffset+ j*pixelStep, points);
             }
+
 
             this._meshPoints.push(cc.v2(xOffset+ (j+1)*pixelStep,0))
 

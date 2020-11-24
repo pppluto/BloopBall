@@ -7,7 +7,7 @@
 
 import {RoleList} from './roles/RoleMapping';
 import Start from './start'
-import PlayerHost from './helper/player';
+import PlayerHelper from './helper/player';
 
 const {ccclass, property} = cc._decorator;
 
@@ -94,7 +94,7 @@ export default class NewClass extends cc.Component {
         });
     }
     renderItems(){
-        let unlockedRoles = PlayerHost.getUnlockedRoleIds();
+        let unlockedRoles = PlayerHelper.getUnlockedRoleIds();
         let itemW = this.contentItem.data.width;
         let padding = (this.scrollList.node.width - itemW * MAX_SCALE) / 2;
 

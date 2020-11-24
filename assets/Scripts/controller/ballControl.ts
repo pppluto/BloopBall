@@ -328,8 +328,7 @@ export default class BallController extends cc.Component{
         if(angularV < 600) {
             this.applyForce();
         }
-       
-        // //不能直接修改速度，可能导致球滑行
+
         if(velocity.x <= this.minXSpeed){
             this.body.linearVelocity = cc.v2(this.minXSpeed,velocity.y);
         }

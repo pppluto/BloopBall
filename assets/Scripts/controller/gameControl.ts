@@ -1,8 +1,9 @@
 // http://www.emanueleferonato.com/2011/10/04/create-a-terrain-like-the-one-in-tiny-wings-with-flash-and-box2d-%E2%80%93-adding-more-bumps/
-import SkillHost from '../roles/skillHost'
 import { SkinMapping } from '../roles/RoleMapping'
 import Storage from '../common/Storage'
-import AIHelper,{getAIConfigByLevel} from '../helper/AI';
+import {getAIConfigByLevel} from '../helper/AI';
+import Global from '../global';
+import PlayerHelper from '../helper/player';
 
 cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
     let physicsManager = cc.director.getPhysicsManager();
@@ -65,6 +66,7 @@ export default class NewClass extends cc.Component {
     playerRank: number = 1;
     playerFinish: boolean = false;
 
+    //debug
     @property(cc.Label)
     disLabel: cc.Label=null
     @property(cc.Label)
@@ -79,6 +81,10 @@ export default class NewClass extends cc.Component {
     debugInfoList: [string] = ['']
     debugCount: number = 0;
     onLoad () {
+
+        // let {AIRange,highAINum} = PlayerHelper.instance.matchAI();
+        // let [low,high] = AIRange;
+
         this.ctx.lineCap = cc.Graphics.LineCap.ROUND;
         this.gameBoard.active = false;
         this.loadConfig()
@@ -169,6 +175,10 @@ export default class NewClass extends cc.Component {
         this.balls = [];
         let userIndex = Math.floor(Math.random() * player_num);
         this.playerIndex = userIndex;
+
+        //TODO:随机生成其它的电脑角色
+        let userUsedRole = Global.roleUsed;
+        let userUsedRoleSkin = userUsedRole ? SkinMapping[userUsedRole.name] :  SkinMapping['spider'];
         for (let index = 0; index < player_num; index++) {
             let player = cc.instantiate(this.motorBall);
             let ball = player.getComponent('motorBall');
@@ -176,7 +186,7 @@ export default class NewClass extends cc.Component {
             ball.initWithPosition(cc.v2( xPosition + (index + 1) * 100, yPosition ));
 
             let isAI = index !==  userIndex;
-            let skinConfig = SkinMapping['spider'];
+            let skinConfig = userUsedRoleSkin;
             ball.skinConfig = skinConfig
             this.mainWorld.addChild(player);
             ball.enableContact = true;

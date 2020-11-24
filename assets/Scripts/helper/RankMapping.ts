@@ -11,10 +11,10 @@ export const RewardConfig = {
     majorBonus: 200,
 }
 
-export interface RankConfig {
+export interface MatchConfig {
     name: string,
-    range: [number,number], //积分要求
-    AIRange: [number,number], //ai 等级区间
+    range: number[], //积分要求
+    AIRange: number[], //ai 等级区间
 }
 
 export const WinStreakAiConfig = [0,1,1,2,3,4,5];
@@ -22,6 +22,23 @@ export const WinStreakAiConfig = [0,1,1,2,3,4,5];
 export const getHighAINumByStreak = (streak) =>{
     if(streak > 5) return 5;
     return WinStreakAiConfig[streak] || 0;
+}
+
+export function getMatchByRank(rank):MatchConfig {
+    if(rank >= 500) {
+        return RankMaps[-1];
+    }
+    for (let index = 0; index < RankMaps.length; index++) {
+        const element = RankMaps[index];
+        let [floor,ceil] = element.range;
+        let inRange = floor<= rank && ceil >= rank;
+        if(inRange) {
+            return element;
+        } else {
+            continue
+        }        
+    }
+    return RankMaps[0];
 }
 
 export const RankMaps = [

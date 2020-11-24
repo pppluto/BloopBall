@@ -1,5 +1,6 @@
 import PlayerHelper from './helper/player';
 import { Role } from './roles/RoleMapping';
+import Global from './global'
 const {ccclass,property} = cc._decorator;
 
 @ccclass
@@ -27,6 +28,7 @@ export default class Start extends cc.Component{
         this.roleListWrapper.active = true;
     }
     choosedRole(role){
+        Global.roleUsed = role;
         this.role = role;
         this.roleListWrapper.active = false;
         this.startGame();

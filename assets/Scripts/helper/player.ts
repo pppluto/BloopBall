@@ -4,10 +4,11 @@
  */
 import Storage from '../common/Storage';
 import {Role} from '../roles/RoleMapping'
+import {getMatchByRank,getHighAINumByStreak} from './RankMapping'
 const {USER_RECORD_KEY,USER_UNLOCKED_ROLES_KEY} = Storage;
 
 export interface UserRecord {
-    score: number,
+    rank: number,
     streak: number,
     coins: number,
 }
@@ -40,31 +41,37 @@ export default class PlayerHelper {
         let userRecord = <UserRecord>Storage.getItem(USER_RECORD_KEY);
         if(!userRecord){
             userRecord = {
-                score: 0,
+                rank: 0,
                 streak: 0,
                 coins: 0
             }
     
             Storage.saveItem(USER_RECORD_KEY,userRecord)
         }
-        PlayerHelper.instance.userRecord = userRecord;
+        this.userRecord = userRecord;
     }
     updateUserRecord(record){
-        let old = PlayerHelper.instance.userRecord;
+        let old = this.userRecord;
         let newRecord = {...old,...record};
-        PlayerHelper.instance.userRecord = newRecord
+        this.userRecord = newRecord
         
         Storage.saveItem(USER_RECORD_KEY, newRecord);
     }
-    unlockRole(role:Role) {
-        let record = PlayerHelper.instance.userRecord;
+    unlockRole(role:Role): boolean{
+        let record = this.userRecord;
         if(record.coins<role.cost){
             return false;
         }
         PlayerHelper.addUnlockRole(role.id);
         record.coins -= role.cost;
-        PlayerHelper.instance.updateUserRecord(record);
+        this.updateUserRecord(record);
         return true;
     }
 
+    public matchAI() {
+        let rank = this.userRecord.rank;
+        let {AIRange} = getMatchByRank(rank);
+        let highAINum = getHighAINumByStreak(this.userRecord.streak)
+        return {AIRange,highAINum}
+    }
 }
