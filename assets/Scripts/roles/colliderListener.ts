@@ -13,6 +13,14 @@ const { ccclass } = cc._decorator;
 export default class CollisionListener extends cc.Component {
    
     onBeginContact(contact, selfCollider, otherCollider) {
+        // if(selfCollider.node.group === 'block'){
+        //     let parent = selfCollider.node.parent;
+        //     let bHost = parent.getComponent('barrierHost');
+        //     if(bHost){
+        //         bHost.onBeginContact(contact, selfCollider, otherCollider);
+        //     }
+        //     return;
+        // }
         let ballNode = selfCollider.node.parent;
         let ballControl = ballNode.getComponent('ballControl');
         ballControl.onAroundBeginContact(contact,selfCollider,otherCollider);

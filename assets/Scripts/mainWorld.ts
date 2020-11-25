@@ -1,7 +1,5 @@
 // http://www.emanueleferonato.com/2011/10/04/create-a-terrain-like-the-one-in-tiny-wings-with-flash-and-box2d-%E2%80%93-adding-more-bumps/
-import SkillHost from './roles/skillHost'
-import { SkinMapping } from './roles/RoleMapping'
-import { BarrierMapping } from './barrier/Barrier';
+import { Barrier, BarrierConfig, BarrierList, BarrierMapping, BarrierRegular, BarrierType, NegtiveBarrierList, NertualBarrierList, PositiveBarrierList } from './barrier/Barrier';
 import { BarrierHost } from './barrier/barrierHost';
 
 
@@ -18,6 +16,11 @@ export const TagType = cc.Enum({
     BLOCK_TAG: 44,
     DEFAULT: 0
 });
+
+interface BarrierHolder {
+    x: number,
+    barrier: Barrier
+}
 
 const {ccclass,property} = cc._decorator
 
@@ -52,7 +55,8 @@ export default class MainWorld extends cc.Component{
     //mesh点
     _meshPoints: Array<any> = [];
     //极值点 (用来确定空中障碍位置)
-    _extremePoints:Array<any> = [];
+    _extremePoints: Array<any> = [];
+    _barrierCaches: BarrierHolder[] = [];
     // cc.macro.FIX_ARTIFACTS_BY_STRECHING_TEXEL_TMX = 1;
     mapEnd: boolean = false;
 
@@ -387,7 +391,7 @@ export default class MainWorld extends cc.Component{
             points.push( cc.v2( pixelStep, 0) );
 
             //碰撞效果不对
-            let disable = true;
+            let disable = false;
             //间隔开，并不影响物理效果，节省collider node
             if(disable || j % 2){
                 this.generateTerrianPiece(xOffset+ j*pixelStep, points);
@@ -427,7 +431,7 @@ export default class MainWorld extends cc.Component{
             points.push( cc.v2( pixelStep, nextY) );
             points.push( cc.v2( pixelStep, 0) );
 
-            let disable = true;
+            let disable = false;
             if(disable || j % 2){
                 this.generateTerrianPiece(xOffset+ j*pixelStep, points);
             }
@@ -447,53 +451,135 @@ export default class MainWorld extends cc.Component{
         this._extremePoints.push(extremePoint);
     }
 
-    getMaxPosWithXOffset(xOffset){
-        let indexOfFlag = Math.round(xOffset / this.pixelStep);
+    getMaxPosWithXOffset(xOffset):cc.Vec2{
+        let index = Math.round(xOffset / this.pixelStep);
         let allTopPoints = this._meshPoints.filter((_,index) => index % 2 !== 0)
-        let pos = allTopPoints[indexOfFlag];
-        return pos
+        let pos = allTopPoints[index];
+        return pos;
     }
     //创建障碍物
     prepareBarriers(){
+        let preBarrierX = cc.winSize.width;
+        let preBarrier = this._barrierCaches[this._barrierCaches.length-1];
+        if(preBarrier){
+            preBarrierX = preBarrier.x;
+        }
+        let ballW = 40;// HARD CODE
+        let {spaceRange:[minSpace,maxSpace]} = BarrierRegular;
+      
+       
         //应该在所有点中去生成障碍，这里只做demo
-        this._extremePoints.forEach((ePoint,index) => {
+        // this._extremePoints.forEach((ePoint,index) => {
 
-            if(ePoint.x < cc.winSize.width * 2) return;
+        //     if(ePoint.x < cc.winSize.width ) return;
 
-            if(ePoint.x > this.xOffset - 1000) return;
+        //     if(ePoint.x > this.mapLength - 1000) return;
 
-            if(ePoint.y > MIN_HEIGHT) {
-               let tmp = Math.random() > 0.5;
-               let preX = ePoint.x - 10;
-               let preY = this.getMaxPosWithXOffset(preX);
-               if(true||tmp){
-                   this.generateGroundBarrier(ePoint,cc.v2(preX,preY))
-               } else {
-                   this.generateAirBarrier(ePoint)
-               }
+        //     if(ePoint.x - preBarrierX < minSpace * ballW) return;
+         
+        //     let {barrier,barrierConfig} = this.getBarrierConfig();
+
+        //     preBarrierX = ePoint.x;
+        //     this._barrierCaches.push({x:ePoint.x,barrier});
+
+        //     this.prepareBarrier(ePoint,barrierConfig);
+        // });
+        // this._extremePoints = []
+
+        // return;
+
+        //规则见 doc/barrier.md
+        while(preBarrierX < this.xOffset - 500) {
+            let x = preBarrierX + Math.round( Math.random() * (maxSpace - minSpace)  * ballW ) + minSpace * ballW;
+            let y:number = this.getMaxPosWithXOffset(x).y;
+            preBarrierX = x;
+
+            let tmp = this.getBarrierConfig();
+            if(!tmp) {
+                return;
             }
-        });
-        this._extremePoints = []
+            let {barrier,barrierConfig} = tmp;
+          
+            this.prepareBarrier(cc.v2(x,y),barrierConfig);
+            this._barrierCaches.push({x,barrier});
+        }
     }
-    
-    generateAirBarrier(position,index?){
-        let randomH = Math.round(Math.random() * 50) + 200;
+    getBarrierConfig(){
+        let preBarrierX = cc.winSize.width;
+        let preType = null;
+        let preBarrier = this._barrierCaches[this._barrierCaches.length-1];
+        if(preBarrier){
+            preBarrierX = preBarrier.x;
+            preType = preBarrier.barrier.type;
+        }
+        let {sameSeed} = BarrierRegular;
+        let barrierCandidates:Barrier[] = [];
+        let [aList,bList,cList] = [PositiveBarrierList,NegtiveBarrierList,NertualBarrierList];
+        if(preBarrier && preBarrier.barrier.type !== BarrierType.NEUTRAL) {
+            let type = preBarrier.barrier.type;
+            let sameFlag = Math.random() < sameSeed;
+
+            type = sameFlag ? type : (type === BarrierType.POSITIVE ? BarrierType.NEGTIVE:BarrierType.POSITIVE);
+            switch (type) {
+                case BarrierType.POSITIVE:
+                    barrierCandidates = aList;
+                    break;
+                case BarrierType.NEGTIVE:
+                    barrierCandidates = bList;
+                    break;
+                default:
+                    break;
+            }
+            if(sameFlag) {
+                barrierCandidates = barrierCandidates.slice().filter(v => v.name !== preBarrier.barrier.name);
+            }
+
+        } else {
+            let seed = Math.floor(Math.random() * 3);
+            barrierCandidates = [aList,bList,cList][seed];
+        }
+
+
+        let tmp = Math.floor(Math.random() * barrierCandidates.length);
+        let barrier = barrierCandidates[tmp];
+        let barrierConfig = BarrierMapping[barrier.name];
+        if(!barrierConfig) {
+            console.log('barrierconfig',barrier,barrierConfig);
+            console.warn('障碍信息错误，请检查barrierMapping')
+            return null;
+        }
+        return {barrier,barrierConfig};
+
+    }
+    prepareBarrier(ePoint,bConfig:BarrierConfig){
+        if(ePoint.y < MIN_HEIGHT) return;
+
+        if(bConfig.inAir){
+            this.generateAirBarrier(ePoint,bConfig)
+        } else {
+            let preX = ePoint.x - 10;
+            let preY:number = this.getMaxPosWithXOffset(preX).y;
+            this.generateGroundBarrier(ePoint,cc.v2(preX,preY),bConfig)
+        }
+    }
+    generateAirBarrier(position,bConfig:BarrierConfig){
+        let randomH = Math.round(Math.random() * 20) + 50;
         let barrier = new cc.Node();
         let bc = barrier.addComponent(BarrierHost);
-        bc.barrierConfig = Math.random() > 0.5 ? BarrierMapping.smallAirBlock : BarrierMapping.bigAirBlock;
+        bc.barrierConfig = bConfig;
 
         bc.initWithPosition(cc.v2( position.x,  position.y+randomH ));
         this.node.addChild(barrier);
     }
-    generateGroundBarrier(position,position2){
+    generateGroundBarrier(position,position2,bConfig:BarrierConfig){
         let cos = (position.y - position2.y) / (position.x - position2.x)
         let angle = 180 * Math.acos(cos) / Math.PI;
 
         let barrier = new cc.Node();
         let bc = barrier.addComponent(BarrierHost);
-        bc.barrierConfig = Math.random() > 0.5 ? BarrierMapping.poo : BarrierMapping.cactus;
+        bc.barrierConfig = bConfig;
 
-        bc.initWithPosition(cc.v2( position.x, position.y ),angle);
+        bc.initWithPosition(cc.v2( position.x, position.y ));
         this.node.addChild(barrier);
     }
     

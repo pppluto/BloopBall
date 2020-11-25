@@ -8,7 +8,7 @@ import {TagType} from '../mainWorld'
 @ccclass
 export class BarrierHost extends cc.Component {
     
-    barrierConfig: BarrierConfig = null
+    public barrierConfig: BarrierConfig = null
 
     set(config){
         this.barrierConfig = config;
@@ -24,6 +24,12 @@ export class BarrierHost extends cc.Component {
         }
         this.prepare()
     }
+    //放哪里去处理
+    onBeginContact (contact, selfCollider, otherCollider) {
+        if(this.barrierConfig.disposable){
+            this.preDestory();
+        }
+    }
     prepare(){
         if(!this.barrierConfig) return;
         
@@ -38,16 +44,22 @@ export class BarrierHost extends cc.Component {
                 let barrier = <any>cc.instantiate(prefab);
                
                 let offset = barrier.height/2;
+                let {yOffset} = this.barrierConfig;
+                if(yOffset) {
+                    offset += yOffset * barrier.height;
+                }
                 this.node.y += offset-20;
                 
-                let collider = barrier.getComponent(cc.PhysicsPolygonCollider);
-                collider.tag = TagType.BLOCK_TAG;
+                let collider = barrier.getComponent(cc.PhysicsPolygonCollider) || barrier.getComponent(cc.PhysicsCircleCollider);
+                if(collider){
+                    collider.tag = TagType.BLOCK_TAG;
+                }
                 barrier.parent = this.node;
                  
             });
         })
     }
-    preDestory(){
+    public preDestory(){
         //bundle 是不是也要清理
         this.node.parent = null;
         this.node.destroy();

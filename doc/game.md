@@ -75,12 +75,6 @@ iOS巨卡
 地形边缘考虑用 uniform 数据来搞，用同一个 mesh 渲染
 结算部分
 
-#### 球模型
-
-- motorBall  球UI表现 (distance + motor joint模拟，持续施加力矩来模拟马达动力，不需要同步节点旋转，通过 motor joint 模拟弹性碰撞效果，distance joint 保证不会过度变形)
-- ball2 (主要distance joint模拟，需要同步节点旋转，模拟力矩旋转是个问题，ps:这个可能性能好一些)
-- ballControl 控制球运动，监听球碰撞(障碍，技能)
-
 ##### 技能 (触发放到ballControl中去)
 
 - skillHost 

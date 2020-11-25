@@ -2,7 +2,9 @@
  * 1）遇到障碍的时候，设置AI跳过障碍的概率为A；
  * 2）区域判定：判断AI周围X范围内有无敌人；
  * 3）技能释放：区域判定范围内有人的情况下，地图前半程AI释放技能概率为Y，后半程AI释放技能概率为Z。
- * 4） 综合调整A/X/Y/Z的参数来设置AI的聪明程度，设置AI等级，暂定为20个等级，等级越高，智能越高。
+ * 4）综合调整A/X/Y/Z的参数来设置AI的聪明程度，设置AI等级，暂定为20个等级，等级越高，智能越高。
+ * 1. ai之间互相使用技能的规则
+ * 2. 坡度检测跳跃
  */
 
 import { SkillEffect } from "../roles/RoleMapping";
@@ -64,15 +66,16 @@ export default class AIHelper extends cc.Component {
         let {range} = skillEffect;
         let has = otherPlayers.some(e => {
             let playerW = player.width * player.scale;
-            let otherW = e.width * e.scale
+
             let offset = player.position.sub(e.position);
-            let tmp = playerW/2 + otherW/2;
-            let inAround = offset.mag() < (this.config.aroundDistance + tmp);
+            let tmp = player.width * player.scale + e.width * e.scale;
+            let inAround = offset.mag() - tmp/2 < this.config.aroundDistance;
+
             if(inAround && range) {
                 let [start,end] = range;
-                let startPosX = player.position.x - playerW / 2 + start * playerW;
-                let endPosX =  player.position.x + playerW / 2 + end * playerW;
-                return e.position.x > startPosX && e.position.x<endPosX
+                let startPosX = player.position.x - playerW / 2 + start;
+                let endPosX =  player.position.x + playerW / 2 + end;
+                return e.position.x > startPosX && e.position.x < endPosX
             } else {
                 return inAround;
             }

@@ -4,6 +4,8 @@ import {SkillConfig} from '../roles/RoleMapping'
 import SkillHost from '../roles/skillHost'
 import AIHelper, { AIConfig,getAIConfigByLevel } from '../helper/AI'
 import Storage from '../common/Storage'
+import {BarrierHost} from '../barrier/barrierHost'
+import { BarrierConfig, BarrierEffectType } from '../barrier/Barrier'
 const {ccclass, property} = cc._decorator;
 
 @ccclass
@@ -15,10 +17,8 @@ export default class BallController extends cc.Component{
     AILevel: number = 1;
     prePressTS: number = 1;
     isAI: boolean = false;
-    _finished: boolean = false;
     body: cc.RigidBody = null;
     gameCtr: GameControl = null;
-    _collideCount: number = 0;
     skillConfig: SkillConfig = null;
     aiHelper: AIHelper = null
     preSkillTriggerTS: number = 0;
@@ -27,6 +27,9 @@ export default class BallController extends cc.Component{
     //TODO: 期望改成 map 结构，或者2进制做与或操作来判断
     // flagStateMap: Map<string,any> = new Map()
     stateFlag: string = null;
+
+    _collideCount: number = 0;
+    _finished: boolean = false;
 
     onLoad() {
 
@@ -48,8 +51,13 @@ export default class BallController extends cc.Component{
     updateAIConfig(){
         if(!this.aiHelper) return;
         let config = Storage.getItem(Storage.AI_CONFIG_KEY);
-        console.log('update',config)
-        this.aiHelper.config = config
+        this.aiHelper.config = config;
+
+        this.unschedule(this.autoControl);
+
+        let interval = config.behaveInterval || 2;
+        this.schedule(this.autoControl, interval);
+
     }
     start () {
         let ballJS = this.getComponent('motorBall');
@@ -88,22 +96,15 @@ export default class BallController extends cc.Component{
         if(this._collideCount <= 0) {
             return;
         }
+        this.applyImpulse(cc.v2(0,40));
+    }
+    applyImpulse(impulse:cc.Vec2){
         let body = this.body;
         let center = body.getWorldCenter();
         let mass = body.getMass()
-        let vec = cc.v2(0,100000)
-        body.applyForce(vec,center,true);
-    }
-
-    applyImpluse(){
-        let ballJS = this.getComponent('motorball');
-        if(!ballJS || !ballJS.spheres) return;
-        ballJS.spheres.forEach(element => {
-            let rigid = element;
-            let center = rigid.getWorldCenter()
-            rigid.applyLinearImpulse(cc.v2(0,100),center,true);
-        });  
-       
+        let gravity = 10;
+        let vec = impulse.mul(mass * gravity);
+        body.applyLinearImpulse(vec,center,true)
     }
     applyForce(force=-300){
         if(this.buffState === TagType.DEBUFF_TAG) {
@@ -113,6 +114,7 @@ export default class BallController extends cc.Component{
         let m = body.getMass()
         body.applyTorque(m * force,true);
     }
+   
     disableSchedule(){
         this.unschedule(this.autoControl)
     }
@@ -120,7 +122,7 @@ export default class BallController extends cc.Component{
 
         let now = new Date().getTime()
         this.preBehaveTS = now;
-        console.log('jump',this.stateFlag)
+        // console.log('jump',this.stateFlag)
 
         if(this.stateFlag === 'block') {
            this.jumpWhenBlocked()
@@ -158,7 +160,7 @@ export default class BallController extends cc.Component{
 
         this.prePressTS = now;
         let collideCount = this._collideCount;
-        console.log('upPress--collider count',collideCount)
+        // console.log('upPress--collider count');
         if(collideCount <= 0) {
             return;
         }
@@ -200,6 +202,58 @@ export default class BallController extends cc.Component{
         //TODO:范围检测，技能，特殊障碍，放这里
     }
 
+    beginBarrierEffect(collider){
+        let barrierParent = collider.node.parent;
+        if(barrierParent){
+            let host = barrierParent.getComponent(BarrierHost);
+            if(host){
+                let bc = <BarrierConfig>host.barrierConfig;
+                if(bc.disposable){
+                    host.preDestory();
+                }
+                let effect = bc.effect;
+                if(effect){
+                    switch (effect.type) {
+                        case  BarrierEffectType.LINEAR:
+                            this.applyImpulse(cc.v2(effect.impulse,0))
+                            break;
+                        case BarrierEffectType.DAMPING:
+                            let body = this.body;
+                            body.linearDamping = effect.damping;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+            }
+        }
+    }
+    endBarrierEffect(collider){
+        let barrierParent = collider.node.parent;
+        if(barrierParent){
+            let host = barrierParent.getComponent(BarrierHost);
+            if(host){
+                let bc = <BarrierConfig>host.barrierConfig;
+
+                let effect = bc.effect;
+                if(effect){
+                    switch (effect.type) {
+                        case BarrierEffectType.LINEAR:
+                            break;
+                        case BarrierEffectType.DAMPING:
+                            let body = this.body;
+                            body.linearDamping = 0.2;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+            }
+        }
+    }
+
     //中心刚体碰撞
     onBeginContact (contact, selfCollider, otherCollider) {
         //只计算地面，空中平台
@@ -209,6 +263,7 @@ export default class BallController extends cc.Component{
             if(otherGroup === 'block'){
                 // this.jumpWhenBlocked();
                 this.stateFlag = otherGroup;
+                this.beginBarrierEffect(otherCollider);
             }
         }
 
@@ -239,6 +294,7 @@ export default class BallController extends cc.Component{
             this._collideCount -= 1;
             if(otherGroup === 'block'){
                 this.stateFlag = '';
+                this.endBarrierEffect(otherCollider);
             }
         }
         

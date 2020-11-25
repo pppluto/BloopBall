@@ -62,7 +62,7 @@ export default class NewClass extends cc.Component {
 
 
     balls: Array<cc.Node> = [];
-    playerIndex: number;
+    playerIndex: number = 0;
     playerRank: number = 1;
     playerFinish: boolean = false;
 
@@ -77,6 +77,8 @@ export default class NewClass extends cc.Component {
     skillLabel2: cc.Label=null
     @property(cc.Label)
     debugLabel: cc.Label=null
+    @property(cc.Label)
+    behaveLabel: cc.Label=null
 
     debugInfoList: [string] = ['']
     debugCount: number = 0;
@@ -235,7 +237,7 @@ export default class NewClass extends cc.Component {
         let endmark = this.getMapLength();
         if(!balls || !balls.length) return;
 
-        let user = balls[0];
+        let user = balls[this.playerIndex];
         this.ctx.clear();
 
         let progressBarLen = 300;
@@ -246,14 +248,12 @@ export default class NewClass extends cc.Component {
         this.drawLine(0,userX,cc.Color.ORANGE)
        
         balls.forEach((element,index) => {
+            if(index === this.playerIndex) return;
             let x =  element.x / endmark * progressBarLen;
-            if(index === this.playerIndex){
-                this.drawCircle(userX,8,cc.Color.RED);
-            } else {
-                this.drawCircle(x,4,cc.Color.YELLOW)
-            }
+            this.drawCircle(x,4,cc.Color.YELLOW)
         });
 
+        this.drawCircle(userX,8,cc.Color.RED);
     }
 
     /**
@@ -274,6 +274,9 @@ export default class NewClass extends cc.Component {
             case 4:
                 this.changePeriodSecond(slider.progress)
                 break;
+            case 5:
+                this.changeBehave(slider.progress)
+                break;
 
         }
     }
@@ -290,6 +293,7 @@ export default class NewClass extends cc.Component {
         this.barrierLabel.string = '跳过概率'+aiconfig.barrierPosibility;
         this.skillLabel.string = '一阶段'+aiconfig.firstPeriodSkillPosibility;
         this.skillLabel2.string = '二阶段'+aiconfig.secondPeriodSkillPosibility;
+        this.behaveLabel.string = '间隔'+aiconfig.behaveInterval;
 
     }
     changeDistance(progress){
@@ -314,6 +318,10 @@ export default class NewClass extends cc.Component {
 
         let secondPeriodSkillPosibility = progress
         this.updateAiConfig({secondPeriodSkillPosibility});
+    }
+    changeBehave(progress){
+        let behaveInterval = Number(0.1 + progress * 4.9).toFixed(1);
+        this.updateAiConfig({behaveInterval});
     }
     updateAiConfig(config){
         let key = Storage.AI_CONFIG_KEY;
