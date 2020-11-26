@@ -8,6 +8,8 @@ import {TagType} from '../mainWorld'
 @ccclass
 export class BarrierHost extends cc.Component {
     
+    public static barrierIdx = 0;
+
     public barrierConfig: BarrierConfig = null
 
     set(config){
@@ -32,7 +34,11 @@ export class BarrierHost extends cc.Component {
     }
     prepare(){
         if(!this.barrierConfig) return;
-        
+    
+
+        this.barrierConfig.customData = BarrierHost.barrierIdx;
+        BarrierHost.barrierIdx += 1;
+    
         let {bundleName,prebafPath} = this.barrierConfig
 
         cc.assetManager.loadBundle(bundleName,null,(err,bundle) => {
@@ -43,7 +49,7 @@ export class BarrierHost extends cc.Component {
             bundle.load(prebafPath, cc.Prefab,(err,prefab) => {
                 let barrier = <any>cc.instantiate(prefab);
                
-                let offset = barrier.height/2;
+                let offset = 0;
                 let {yOffset} = this.barrierConfig;
                 if(yOffset) {
                     offset += yOffset * barrier.height;

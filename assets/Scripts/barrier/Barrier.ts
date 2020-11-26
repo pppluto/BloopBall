@@ -4,14 +4,15 @@
  */
 export const BarrierRegular = {
     sameSeed: 0.2,
-    spaceRange: [5,10], //以球为单位
+    spaceRange: [10,20], //以球为单位
 
 }
 //fixme
 export enum BarrierEffectType {
     LINEAR,
     AUGULAR,
-    DAMPING
+    DAMPING,
+    STUNNING
 }
 export enum BarrierType {
     POSITIVE,
@@ -22,29 +23,42 @@ export enum BarrierType {
 export interface BarrierEffect{
     duration?: number //s
     type: BarrierEffectType,
-    impulse?: number,
+    impulse?: cc.Vec2,
     damping?: number
 }
 export interface Barrier{
     name: string,
     type: BarrierType
 }
+
+export enum BarrierPriority{
+    NONE,
+    VERYLOW = 1 <<1,
+    LOW = 1 << 2,
+    HIGH = 1 << 3,
+    VERYHIGH = 1 << 4
+}
 export interface BarrierConfig{
     name:string,
-    inAir?: boolean,
-    effect?: BarrierEffect,
     bundleName: string,
     prebafPath: string,
+    syncGroundAngle?: boolean,
+    effect?: BarrierEffect,
     type?: BarrierEffectType,
     disposable?: boolean, //是否碰撞后消除
     yOffset?: number, //位置补偿
+    priority?: BarrierPriority,
+    customData?: any //
 }
 
-export const BarrierMapping = {
+type BMType = Record<string,BarrierConfig>
+
+export const BarrierMapping: BMType = {
     poo: {
         name: 'poo',
         prebafPath: 'barrier/poo',
-        bundleName:'resources'
+        bundleName:'resources',
+        syncGroundAngle: true,
     },
     cactus: {
         name: 'cactus',
@@ -55,42 +69,51 @@ export const BarrierMapping = {
         name: 'mud',
         prebafPath: 'barrier/mud',
         bundleName:'resources',
+        syncGroundAngle: true,
         effect: {
             type: BarrierEffectType.DAMPING,
             damping: 1,
         },
-        yOffset: -0.5
+        yOffset: 0
     },
     mushroom: {
         name: 'cactus',
         prebafPath: 'barrier/mushroom',
         bundleName:'resources',
-        yOffset: -0.5
+        yOffset: 0.2,
+        syncGroundAngle: true,
+        priority: BarrierPriority.VERYLOW,
+        effect: {
+            type: BarrierEffectType.LINEAR,
+            impulse: cc.v2(0,50),
+        }
     },
     power: {
         name: 'power',
-        inAir: true,
         prebafPath: 'barrier/power',
         bundleName:'resources',
         disposable: true,
         effect: {
             type: BarrierEffectType.LINEAR,
-            impulse: 40,
+            impulse: cc.v2(30,0),
         },
-        yOffset: 0
+        yOffset: 0.6
     },
     wheel: {
         name: 'wheel',
-        inAir: true,
         prebafPath: 'barrier/wheel',
-        bundleName:'resources'
+        bundleName:'resources',
+        yOffset: 0.8
     },
     chomper: {
         name: 'chomper',
-        inAir: true,
         prebafPath: 'barrier/chomper',
         bundleName:'resources',
-        yOffset: -0.7
+        yOffset: 0,
+        effect: {
+            type: BarrierEffectType.STUNNING,
+            duration: 1,
+        }
     },
     // smallAirBlock:{
     //     name: 'smallAirBlock',
@@ -107,14 +130,14 @@ export const BarrierMapping = {
 }
 
 export const BarrierList:Barrier[] = [
-    {
-        name:'poo',
-        type: BarrierType.NEUTRAL
-    },
-    {
-        name:'cactus',
-        type: BarrierType.NEUTRAL
-    },
+    // {
+    //     name:'poo',
+    //     type: BarrierType.NEUTRAL
+    // },
+    // {
+    //     name:'cactus',
+    //     type: BarrierType.NEUTRAL
+    // },
     {
         name:'mud',
         type: BarrierType.NEGTIVE

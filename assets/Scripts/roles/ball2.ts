@@ -1,6 +1,5 @@
 
 import ColliderListener from './colliderListener';
-import { SKinConfig,SkinBody } from './RoleMapping'
 
 const { ccclass, property } = cc._decorator;
 

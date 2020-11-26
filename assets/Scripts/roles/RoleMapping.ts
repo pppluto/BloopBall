@@ -27,18 +27,11 @@ export interface SkinBody{
     isBack?: boolean,
 }
 
-export interface SKinConfig {
+export interface RoleSKinConfig {
     name: string,
-    bodies: [SkinBody],
+    bodies: SkinBody[],
     skill?: SkillConfig,
     bundleName?: string //默认会是resources
-}
-
-export interface RoleDetail{
-    name: string,
-    bodies: SKinConfig[],
-    skill: SkillConfig,
-    bundleName: string
 }
 
 export interface Role{
@@ -51,7 +44,8 @@ export interface Role{
  * 默认第一个body为主皮肤
  * 资源默认都放在resources bundle下
  */
-export const SkinMapping = {
+type SMType = Record<string,RoleSKinConfig>;
+export const RoleSkinMapping:SMType = {
     spider: {
         name: 'spider',
         bodies: [

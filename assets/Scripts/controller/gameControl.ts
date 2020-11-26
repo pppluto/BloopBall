@@ -1,5 +1,5 @@
 // http://www.emanueleferonato.com/2011/10/04/create-a-terrain-like-the-one-in-tiny-wings-with-flash-and-box2d-%E2%80%93-adding-more-bumps/
-import { SkinMapping } from '../roles/RoleMapping'
+import { RoleSkinMapping } from '../roles/RoleMapping'
 import Storage from '../common/Storage'
 import {getAIConfigByLevel} from '../helper/AI';
 import Global from '../global';
@@ -134,7 +134,7 @@ export default class NewClass extends cc.Component {
         })
     }
     playerWin(isAI){
-        console.log('player win',isAI)
+        console.log('****',isAI ? 'AI finish' :'player finish');
         if(this.playerFinish) return;
         if(isAI && !this.playerFinish) {
             this.playerRank +=1;
@@ -180,7 +180,7 @@ export default class NewClass extends cc.Component {
 
         //TODO:随机生成其它的电脑角色
         let userUsedRole = Global.roleUsed;
-        let userUsedRoleSkin = userUsedRole ? SkinMapping[userUsedRole.name] :  SkinMapping['spider'];
+        let userUsedRoleSkin = userUsedRole ? RoleSkinMapping[userUsedRole.name] :  RoleSkinMapping['spider'];
         for (let index = 0; index < player_num; index++) {
             let player = cc.instantiate(this.motorBall);
             let ball = player.getComponent('motorBall');
@@ -188,8 +188,8 @@ export default class NewClass extends cc.Component {
             ball.initWithPosition(cc.v2( xPosition + (index + 1) * 100, yPosition ));
 
             let isAI = index !==  userIndex;
-            let skinConfig = userUsedRoleSkin;
-            ball.skinConfig = skinConfig
+            let RoleSKinConfig = userUsedRoleSkin;
+            ball.RoleSKinConfig = RoleSKinConfig
             this.mainWorld.addChild(player);
             ball.enableContact = true;
             ball.isAI = isAI
@@ -199,7 +199,7 @@ export default class NewClass extends cc.Component {
             bControl.gameCtr = this;
             bControl.isAI = isAI;
             bControl.AILevel = index;
-            bControl.skillConfig = skinConfig.skill;
+            bControl.skillConfig = RoleSKinConfig.skill;
             this.balls.push(player);
             bControl.init();
 

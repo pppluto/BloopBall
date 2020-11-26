@@ -1,6 +1,7 @@
 
 import ColliderListener from './colliderListener';
-import { SKinConfig,SkinBody,SkinMapping } from './RoleMapping'
+import { RoleSKinConfig,SkinBody } from './RoleMapping'
+import {TagType} from '../mainWorld'
 const { ccclass, property } = cc._decorator;
 
 //余弦定理
@@ -39,7 +40,7 @@ export default class Ball extends cc.Component {
 
     spheres: Array<any> = []
 
-    skinConfig: SKinConfig = null// SkinMapping.spider
+    RoleSKinConfig: RoleSKinConfig = null// RoleSkinMapping.spider
     skinSpritesCache: cc.Asset | cc.Asset[] = []
 
     isAI: boolean = false;
@@ -78,11 +79,12 @@ export default class Ball extends cc.Component {
         // let body =  this._createSphere(0, 0, this.centerSize,null);
         // body.node.parent = this.node;
         let body = this.node.getComponent(cc.RigidBody);
-      
+        let collider = this.node.getComponent(cc.PhysicsCircleCollider);
+        collider.tag = TagType.BALL_TAG;
+
         //无弹性效果
-        if( true || cc.sys.os === 'iOS') {
-            let collider = this.node.getComponent(cc.PhysicsCircleCollider);
-            collider.radius = this.centerSize + 2 * this.sphereSize;
+        if( false || cc.sys.os === 'iOS') {
+            collider.radius = this.centerSize + 2 * this.sphereSize + 2;
             collider.apply();
             particleNumber = 0;
         }
@@ -134,10 +136,10 @@ export default class Ball extends cc.Component {
         this.beautify();
     }
     preloadSkin(){
-        if(this.skinConfig){
-            let skinConfig = this.skinConfig;
-            let bodies = skinConfig.bodies;
-            let paths = bodies.map(e => `roleSkin/${skinConfig.name}/` + e.name);
+        if(this.RoleSKinConfig){
+            let RoleSKinConfig = this.RoleSKinConfig;
+            let bodies = RoleSKinConfig.bodies;
+            let paths = bodies.map(e => `roleSkin/${RoleSKinConfig.name}/` + e.name);
             //TODO:测试一下paths只有一个时，返回的是数组还是单个对象
             cc.resources.load(paths, cc.SpriteFrame,(err,sprites) => {
                 if(!sprites) return;
@@ -147,11 +149,11 @@ export default class Ball extends cc.Component {
       
     }
     beautify(){
-        let skinConfig = this.skinConfig;
-        if(!skinConfig) return;
-        let bodies = skinConfig.bodies;
+        let RoleSKinConfig = this.RoleSKinConfig;
+        if(!RoleSKinConfig) return;
+        let bodies = RoleSKinConfig.bodies;
         // tail
-        let paths = bodies.map(e => `roleSkin/${skinConfig.name}/` + e.name);
+        let paths = bodies.map(e => `roleSkin/${RoleSKinConfig.name}/` + e.name);
         cc.resources.load(paths, cc.SpriteFrame,(err,sprites) => {
         //    console.log('sprites',sprites);
            if(!sprites) return;

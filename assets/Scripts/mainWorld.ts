@@ -14,6 +14,7 @@ export const TagType = cc.Enum({
     DEBUFF_TAG: 66,
     GROUND_TAG: 55,
     BLOCK_TAG: 44,
+    BALL_TAG: 10,
     DEFAULT: 0
 });
 
@@ -464,35 +465,22 @@ export default class MainWorld extends cc.Component{
         if(preBarrier){
             preBarrierX = preBarrier.x;
         }
+        let tmpBarrierX = preBarrierX;
         let ballW = 40;// HARD CODE
         let {spaceRange:[minSpace,maxSpace]} = BarrierRegular;
       
-       
-        //应该在所有点中去生成障碍，这里只做demo
-        // this._extremePoints.forEach((ePoint,index) => {
-
-        //     if(ePoint.x < cc.winSize.width ) return;
-
-        //     if(ePoint.x > this.mapLength - 1000) return;
-
-        //     if(ePoint.x - preBarrierX < minSpace * ballW) return;
-         
-        //     let {barrier,barrierConfig} = this.getBarrierConfig();
-
-        //     preBarrierX = ePoint.x;
-        //     this._barrierCaches.push({x:ePoint.x,barrier});
-
-        //     this.prepareBarrier(ePoint,barrierConfig);
-        // });
-        // this._extremePoints = []
-
-        // return;
-
         //规则见 doc/barrier.md
-        while(preBarrierX < this.xOffset - 500) {
-            let x = preBarrierX + Math.round( Math.random() * (maxSpace - minSpace)  * ballW ) + minSpace * ballW;
+        let spaceOffset = 100;
+        let finalOffset = 100;
+        let offset = maxSpace * ballW + finalOffset + spaceOffset;
+        while(preBarrierX < this.xOffset - offset) {
+            let x = preBarrierX + Math.round( Math.random() * (maxSpace - minSpace)  * ballW ) + minSpace * ballW + spaceOffset;
             let y:number = this.getMaxPosWithXOffset(x).y;
             preBarrierX = x;
+
+            if(x > this.mapLength - finalOffset) {
+                break;
+            }
 
             let tmp = this.getBarrierConfig();
             if(!tmp) {
@@ -503,6 +491,46 @@ export default class MainWorld extends cc.Component{
             this.prepareBarrier(cc.v2(x,y),barrierConfig);
             this._barrierCaches.push({x,barrier});
         }
+
+        //         出现1个50%
+        // 出现2个35%
+        // 出现3个15%
+        while(tmpBarrierX < this.xOffset - offset) {
+            let x = tmpBarrierX +  2 * 8 * ballW + spaceOffset;
+            tmpBarrierX = x;
+
+            let seqSeed =  Math.random();
+            // let holder = Array.from({length:20},(_,k) => {
+            //     if(k < 10) return 1
+            //     else if(k < 17) return 2
+            //     else return 3
+            // })
+            // let seqNum = holder[Math.floor(seqSeed * holder.length)];
+            //这样算 概率是不是正确的？
+            let seqNum = seqSeed < 0.15 ? 3 :(seqSeed < 0.5 ? 2 : 1) 
+            for (let index = 0; index < seqNum; index++) {
+                x += index * 340
+
+                if(x > this.mapLength - finalOffset || x > this.xOffset - offset) {
+                    break;
+                }
+
+                let y:number = this.getMaxPosWithXOffset(x).y;
+
+                let seed = Math.floor(Math.random() * NertualBarrierList.length);
+                let barrier = NertualBarrierList[seed];
+                if(!barrier) {
+                    return;
+                }
+                let barrierConfig = BarrierMapping[barrier.name];
+                
+                this.prepareBarrier(cc.v2(x,y),barrierConfig);
+                tmpBarrierX = x;
+
+            }
+
+           
+        }        
     }
     getBarrierConfig(){
         let preBarrierX = cc.winSize.width;
@@ -514,12 +542,12 @@ export default class MainWorld extends cc.Component{
         }
         let {sameSeed} = BarrierRegular;
         let barrierCandidates:Barrier[] = [];
-        let [aList,bList,cList] = [PositiveBarrierList,NegtiveBarrierList,NertualBarrierList];
+        let [aList,bList] = [PositiveBarrierList,NegtiveBarrierList];
         if(preBarrier && preBarrier.barrier.type !== BarrierType.NEUTRAL) {
             let type = preBarrier.barrier.type;
             let sameFlag = Math.random() < sameSeed;
 
-            type = sameFlag ? type : (type === BarrierType.POSITIVE ? BarrierType.NEGTIVE:BarrierType.POSITIVE);
+            type = sameFlag ? type : (type === BarrierType.POSITIVE ? BarrierType.NEGTIVE : BarrierType.POSITIVE);
             switch (type) {
                 case BarrierType.POSITIVE:
                     barrierCandidates = aList;
@@ -530,21 +558,19 @@ export default class MainWorld extends cc.Component{
                 default:
                     break;
             }
-            if(sameFlag) {
-                barrierCandidates = barrierCandidates.slice().filter(v => v.name !== preBarrier.barrier.name);
-            }
 
         } else {
-            let seed = Math.floor(Math.random() * 3);
-            barrierCandidates = [aList,bList,cList][seed];
+            let seed = Math.floor(Math.random() * 2);
+            barrierCandidates = [aList,bList][seed];
         }
-
-
+        if(preBarrier){
+            barrierCandidates = barrierCandidates.slice().filter(v => v.name !== preBarrier.barrier.name);
+        }
         let tmp = Math.floor(Math.random() * barrierCandidates.length);
         let barrier = barrierCandidates[tmp];
         let barrierConfig = BarrierMapping[barrier.name];
         if(!barrierConfig) {
-            console.log('barrierconfig',barrier,barrierConfig);
+            console.log('barrierconfig',preBarrier,barrier,barrierConfig);
             console.warn('障碍信息错误，请检查barrierMapping')
             return null;
         }
@@ -553,33 +579,21 @@ export default class MainWorld extends cc.Component{
     }
     prepareBarrier(ePoint,bConfig:BarrierConfig){
         if(ePoint.y < MIN_HEIGHT) return;
-
-        if(bConfig.inAir){
-            this.generateAirBarrier(ePoint,bConfig)
-        } else {
-            let preX = ePoint.x - 10;
-            let preY:number = this.getMaxPosWithXOffset(preX).y;
-            this.generateGroundBarrier(ePoint,cc.v2(preX,preY),bConfig)
+        let preX = ePoint.x - 10;
+        let preY:number = this.getMaxPosWithXOffset(preX).y;
+        this.generateBarrier(ePoint,cc.v2(preX,preY),bConfig)
+    }
+    generateBarrier(position,position2,bConfig:BarrierConfig){
+        let angle = 0;
+        if(bConfig.syncGroundAngle){
+            let cos = (position.y - position2.y) / (position.x - position2.x)
+            angle = 180 * Math.atan(cos) / Math.PI;
         }
-    }
-    generateAirBarrier(position,bConfig:BarrierConfig){
-        let randomH = Math.round(Math.random() * 20) + 50;
         let barrier = new cc.Node();
         let bc = barrier.addComponent(BarrierHost);
         bc.barrierConfig = bConfig;
 
-        bc.initWithPosition(cc.v2( position.x,  position.y+randomH ));
-        this.node.addChild(barrier);
-    }
-    generateGroundBarrier(position,position2,bConfig:BarrierConfig){
-        let cos = (position.y - position2.y) / (position.x - position2.x)
-        let angle = 180 * Math.acos(cos) / Math.PI;
-
-        let barrier = new cc.Node();
-        let bc = barrier.addComponent(BarrierHost);
-        bc.barrierConfig = bConfig;
-
-        bc.initWithPosition(cc.v2( position.x, position.y ));
+        bc.initWithPosition(cc.v2( position.x, position.y ),angle);
         this.node.addChild(barrier);
     }
     
