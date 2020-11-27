@@ -12,7 +12,9 @@ export default class Start extends cc.Component{
 
     @property(cc.Node)
     roleListWrapper: cc.Node;
-
+    @property(cc.Node)
+    rankListWrapper: cc.Node;
+    
     role:Role;
     onLoad () {
         cc.director.preloadScene("Main");
@@ -33,6 +35,13 @@ export default class Start extends cc.Component{
 
         let roleListJs = list.getComponent('ScaleList');
         roleListJs.startCtr = this;
+    }
+    showRankList(){
+        this.rankListWrapper.active = true;
+    }
+    hideList(){
+        this.roleListWrapper.active = false;
+        this.rankListWrapper.active = false;
     }
     chooseRole(){
         this.roleListWrapper.active = true;

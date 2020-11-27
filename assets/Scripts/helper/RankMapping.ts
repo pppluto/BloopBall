@@ -11,7 +11,7 @@ export const RewardConfig = {
     majorBonus: 200,
 }
 
-export interface MatchConfig {
+export interface RankConfig {
     name: string,
     range: number[], //积分要求
     AIRange: number[], //ai 等级区间
@@ -24,12 +24,12 @@ export const getHighAINumByStreak = (streak) =>{
     return WinStreakAiConfig[streak] || 0;
 }
 
-export const getMatchByRank = (rank):MatchConfig =>{
+export const getMatchByRank = (rank):RankConfig =>{
     if(rank >= 500) {
-        return RankMaps[-1];
+        return RankList[RankList.length-1];
     }
-    for (let index = 0; index < RankMaps.length; index++) {
-        const element = RankMaps[index];
+    for (let index = 0; index < RankList.length; index++) {
+        const element = RankList[index];
         let [floor,ceil] = element.range;
         let inRange = floor<= rank && ceil >= rank;
         if(inRange) {
@@ -38,7 +38,7 @@ export const getMatchByRank = (rank):MatchConfig =>{
             continue
         }        
     }
-    return RankMaps[0];
+    return RankList[0];
 }
 
 interface WinReward{
@@ -54,7 +54,7 @@ export const getRewardByGameRank = (rank,streak):WinReward => {
     }
     return {reward,bonus};
 }
-export const RankMaps = [
+export const RankList:RankConfig[] = [
     {
         name:'无段位',
         range: [0,4],
