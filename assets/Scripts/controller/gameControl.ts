@@ -182,7 +182,7 @@ export default class NewClass extends cc.Component {
         
     }
     prepareBalls(){
-        let player_num = 2;
+        let player_num = 4;
         let yPosition = 300;
         let xPosition = 400;
         this.balls = [];

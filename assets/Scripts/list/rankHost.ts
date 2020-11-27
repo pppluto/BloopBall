@@ -5,8 +5,8 @@
 // Learn life-cycle callbacks:
 //  - https://docs.cocos.com/creator/manual/en/scripting/life-cycle-callbacks.html
 import start from '../start'
-import PlayerHelper from './player';
-import { RankConfig } from './RankMapping'
+import PlayerHelper from '../helper/player';
+import { RankConfig } from '../helper/RankMapping'
 const {ccclass, property} = cc._decorator;
 
 @ccclass

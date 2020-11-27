@@ -5,21 +5,11 @@
 // Learn life-cycle callbacks:
 //  - https://docs.cocos.com/creator/manual/en/scripting/life-cycle-callbacks.html
 
-import {RoleList} from './roles/RoleMapping';
-import {RankList} from './helper/RankMapping';
-
-import Start from './start'
-import PlayerHelper from './helper/player';
-
 const {ccclass, property} = cc._decorator;
 
 const MAX_SCALE = 1.5;
 const SPACE_X = 30;
 
-const  ItemType = cc.Enum({
-    RANK:1,
-    ROLE:2
-})
 @ccclass
 export default class NewClass extends cc.Component {
 
@@ -34,21 +24,10 @@ export default class NewClass extends cc.Component {
     contentItem: cc.Prefab = null
     // LIFE-CYCLE CALLBACKS:
 
-    @property({
-        type: cc.Enum(ItemType),
-    })
-    itemType = ItemType.ROLE;
-
-    startCtr: Start = null;
     scrollContentLayout: cc.Layout = null;
     scrollEndHandled: boolean = true;
     onLoad () {
-        this.updateScrollSize(800,500)
-        this.scrollContentLayout = this.scrollContent.getComponent(cc.Layout);
-        this.updateLayout();
-        this.renderItems();
-        this.node.on('scrolling',this.onScroll,this);
-        this.node.on('scroll-ended',this.onScrollEnd,this);
+       
     }
     onScroll = (e) => {
         if(this.scrollList.isScrolling()) {
@@ -104,55 +83,6 @@ export default class NewClass extends cc.Component {
             let scale = MAX_SCALE - Math.min(1,offset/itemSep) * (MAX_SCALE - 1);
             node.scale = scale;
         });
-    }
-    renderItems(){
-        console.log('this.itemtype',this.itemType)
-        if(this.itemType === ItemType.ROLE){
-            this.renderRoleItems();
-        } else {
-            this.renderRankItems();
-        }
-    }
-    renderRankItems(){
-        let itemW = this.contentItem.data.width;
-        let padding = (this.scrollList.node.width - itemW * MAX_SCALE) / 2;
-
-        let roleNum = RankList.length;
-        for (let index = 0; index < roleNum; index++) {
-            const element = cc.instantiate(this.contentItem);
-            if(index === 0){
-                element.scale = MAX_SCALE;
-            }
-            let jsc = element.getComponent('rankHost');
-            let rank =  RankList[index];
-            console.log('rak',rank)
-            jsc.rankConfig = rank;
-            jsc.startCtr = this.startCtr;
-            this.scrollContent.addChild(element);
-        }
-        let sepW =  (roleNum - 1) * SPACE_X
-        this.scrollContent.width = padding * 2 + (roleNum - 1) * itemW + MAX_SCALE * itemW + sepW
-    }
-    renderRoleItems(){
-        let unlockedRoles = PlayerHelper.getUnlockedRoleIds();
-        let itemW = this.contentItem.data.width;
-        let padding = (this.scrollList.node.width - itemW * MAX_SCALE) / 2;
-
-        let roleNum = RoleList.length;
-        for (let index = 0; index < roleNum; index++) {
-            const element = cc.instantiate(this.contentItem);
-            if(index === 0){
-                element.scale = MAX_SCALE;
-            }
-            let jsc = element.getComponent('roleHost');
-            let role =  RoleList[index];
-            jsc.role = role;
-            jsc.startCtr = this.startCtr;
-            jsc.locked = role.cost > 0 && !unlockedRoles.includes(role.id)
-            this.scrollContent.addChild(element);
-        }
-        let sepW =  (roleNum - 1) * SPACE_X
-        this.scrollContent.width = padding * 2 + (roleNum - 1) * itemW + MAX_SCALE * itemW + sepW
     }
     start () {
 

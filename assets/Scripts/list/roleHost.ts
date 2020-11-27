@@ -4,7 +4,7 @@
 //  - https://docs.cocos.com/creator/manual/en/scripting/reference/attributes.html
 // Learn life-cycle callbacks:
 //  - https://docs.cocos.com/creator/manual/en/scripting/life-cycle-callbacks.html
-import {RoleList,Role} from './RoleMapping';
+import {RoleList,Role} from '../roles/RoleMapping';
 import start from '../start'
 import PlayerHelper from '../helper/player';
 const {ccclass, property} = cc._decorator;
