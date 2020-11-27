@@ -59,18 +59,19 @@ export default class PlayerHelper {
     getUserRecord(){
         return this.userRecord;
     }
-    updateUserRecordByRank(rank:number){
+    updateUserRecordByRank(gameRank:number){
         let newRecord = Object.assign({},this.userRecord);
         let currentStreak = newRecord.streak;
         // rankRewards: [5,3,2], //排名奖励
         // winStreakLimit: 4, //最小连胜条件
         // winStreaks: [1,2,3], //连胜奖励
-        currentStreak += rank === 1 ? 1 : -currentStreak;
-
-        let {reward,bonus} = getRewardByGameRank(rank,currentStreak)
-        console.log('更新玩家排名，胜利积分,',reward,'连胜次数：',currentStreak,'连胜奖励：',bonus)
-        newRecord.rank += reward+bonus;
+        currentStreak += gameRank === 1 ? 1 : -currentStreak;
         newRecord.streak = currentStreak;
+
+        let {reward,bonus,coins} = getRewardByGameRank(gameRank,newRecord)
+        console.log('更新玩家排名，胜利积分,',reward,'连胜次数：',currentStreak,'连胜奖励：',bonus,'获取金币:',coins)
+        newRecord.rank += reward+bonus;
+        newRecord.coins += coins;
         this.userRecord = newRecord;
         
         Storage.saveItem(USER_RECORD_KEY, newRecord);

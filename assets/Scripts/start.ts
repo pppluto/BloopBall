@@ -30,7 +30,7 @@ export default class Start extends cc.Component{
         let userRecord:UserRecord = PlayerHelper.instance.getUserRecord();
 
         let {name} = getMatchByRank(userRecord.rank)
-        this.rankLabel.string = name + '\n段位分:' + userRecord.rank;
+        this.rankLabel.string = `${name}\n段位分:${userRecord.rank}\n金币${userRecord.coins}`;
 
         //解锁列表
         let list = this.roleListWrapper.children[0];

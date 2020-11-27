@@ -55,7 +55,7 @@ export class BarrierHost extends cc.Component {
                 let offset = 0;
                 let {yOffset} = this.barrierConfig;
                 if(yOffset) {
-                    offset += yOffset * barrier.height;
+                    offset += yOffset * barrier.height * barrier.scale;
                 }
                 this.node.y += offset-20;
                 

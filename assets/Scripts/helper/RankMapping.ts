@@ -3,6 +3,8 @@
  * 排位积分相关配置
  */
 
+import { UserRecord } from "./player";
+
 export const RewardConfig = {
     rankRewards: [5,3,2], //排名奖励
     winStreakLimit: 4, //最小连胜条件
@@ -43,16 +45,37 @@ export const getMatchByRank = (rank):RankConfig =>{
 
 interface WinReward{
     reward:number,
-    bonus: number
+    bonus: number,
+    coins: number
 }
-export const getRewardByGameRank = (rank,streak):WinReward => {
-    let {rankRewards,winStreakLimit,winStreakBonus} = RewardConfig;
-    let reward = rankRewards[rank - 1] || 0;
+const getMarjorName = (rankName) => {
+    return  rankName.split('').filter(v => isNaN(Number(v))).join('');
+}
+export const getRewardByGameRank = (gameRank,userRecord:UserRecord):WinReward => {
+
+    let {rankRewards,winStreakLimit,winStreakBonus,majorBonus,minusBonus} = RewardConfig;
+    let {streak,rank} = userRecord;
+    let reward = rankRewards[gameRank - 1] || 0;
     let bonus = 0;
+    let coins = 0;
     if(streak >= winStreakLimit) {
         bonus = winStreakBonus[streak - winStreakLimit] || 0;
     }
-    return {reward,bonus};
+    let rankName = getMatchByRank(rank).name;
+
+    let newRank = rank + reward + bonus;
+    let newRankName = getMatchByRank(newRank).name;
+
+    if(rankName !== newRankName) {
+        coins = minusBonus;
+        let majorName = getMarjorName(rankName);
+        let majroName2 = getMarjorName(newRankName);
+        if(majorName !== majroName2) {
+            coins = majorBonus;
+        }
+    }
+
+    return {reward,bonus,coins};
 }
 export const RankList:RankConfig[] = [
     {

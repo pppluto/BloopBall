@@ -103,7 +103,7 @@ export const BarrierMapping: BMType = {
         name: 'wheel',
         prebafPath: 'barrier/wheel',
         bundleName:'resources',
-        yOffset: 0.8
+        yOffset: 1
     },
     chomper: {
         name: 'chomper',
