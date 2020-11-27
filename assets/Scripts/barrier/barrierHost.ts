@@ -1,6 +1,7 @@
 const {ccclass, property} = cc._decorator;
 import {BarrierConfig} from './Barrier'
 import {TagType} from '../mainWorld'
+import ColliderListener from '../roles/colliderListener'
 /**
  * 障碍管理，主要给碰撞提供对应的数据(加减速。。。)获取障碍提供的buff/debuff
  */
@@ -32,9 +33,11 @@ export class BarrierHost extends cc.Component {
             this.preDestory();
         }
     }
+    onEndContact (contact, selfCollider, otherCollider) {
+    
+    }
     prepare(){
         if(!this.barrierConfig) return;
-    
 
         this.barrierConfig.customData = BarrierHost.barrierIdx;
         BarrierHost.barrierIdx += 1;
@@ -61,6 +64,7 @@ export class BarrierHost extends cc.Component {
                     collider.tag = TagType.BLOCK_TAG;
                 }
                 barrier.parent = this.node;
+                barrier.addComponent(ColliderListener);
                  
             });
         })

@@ -1,7 +1,3 @@
-import {BarrierHost} from '../barrier/barrierHost';
-import BallControl from '../controller/ballControl';
-const { ccclass } = cc._decorator;
-
 /**
  * ~~这个碰撞监听脚本监听的是球外围碰撞~~
  * ~~基本上球所有的碰撞行为都可以在这里拿到~~
@@ -15,40 +11,31 @@ const { ccclass } = cc._decorator;
  *  specail -> skillHost
  */
 
+const { ccclass } = cc._decorator;
+
 @ccclass
 export default class CollisionListener extends cc.Component {
    
     onBeginContact(contact, selfCollider, otherCollider) {
-        let group = selfCollider.node.group;
-        if(group === 'block') {
-            let parent = selfCollider.node.parent;
-            let bHost = parent.getComponent(BarrierHost);
-            if(bHost){
-                bHost.onBeginContact(contact, selfCollider, otherCollider);
+        //follow engine 
+        //https://github.com/cocos-creator/engine/blob/26031bddd1aecdbf9bbdebe19ecaa672b1c35061/cocos2d/core/physics/CCPhysicsContact.js#L368
+        let comps = selfCollider.node.parent._components;
+        var i,l,comp;
+        for (i = 0, l = comps.length; i < l; i++) {
+            comp = comps[i];
+            if (comp['onBeginContact']) {
+                comp['onBeginContact'](contact, selfCollider, otherCollider);
             }
-        } else if(group === 'ball') {
-            let ballNode = selfCollider.node.parent;
-            let ballControl = ballNode.getComponent(BallControl);
-            ballControl.onBeginContact(contact,selfCollider,otherCollider);
-        } else if(group === 'special'){
-            //TODO
         }
     }
     onEndContact(contact, selfCollider, otherCollider) {
-        let group = selfCollider.node.group;
-        if(group === 'block') {
-            let parent = selfCollider.node.parent;
-            let bHost = parent.getComponent(BarrierHost);
-            if(bHost){
-                bHost.onEndContact(contact, selfCollider, otherCollider);
+        let comps = selfCollider.node.parent._components;
+        var i,l,comp;
+        for (i = 0, l = comps.length; i < l; i++) {
+            comp = comps[i];
+            if (comp['onEndContact']) {
+                comp['onEndContact'](contact, selfCollider, otherCollider);
             }
-        } else if(group === 'ball') {
-            let ballNode = selfCollider.node.parent;
-            let ballControl = ballNode.getComponent(BallControl);
-            ballControl.onEndContact(contact,selfCollider,otherCollider);
-        } else if(group === 'special'){
-            //TODO
         }
-      
     }
 }

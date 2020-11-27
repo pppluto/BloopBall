@@ -215,9 +215,9 @@ export default class BallController extends cc.Component{
             let host = barrierParent.getComponent(BarrierHost);
             if(host){
                 let bc = <BarrierConfig>host.barrierConfig;
-                if(bc.disposable){
-                    host.preDestory();
-                }
+                // if(bc.disposable){
+                //     host.preDestory();
+                // }
                 let effect = bc.effect;              
                 if(effect){
                     switch (effect.type) {

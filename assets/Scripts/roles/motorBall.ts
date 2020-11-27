@@ -220,17 +220,18 @@ export default class Ball extends cc.Component {
 
         node.group = 'ball';
         let body = node.addComponent(cc.RigidBody);
-        body.enabledContactListener = true;
-        // body.type = cc.RigidBodyType.Static;
+     
         let collider = node.addComponent(cc.PhysicsCircleCollider);
         collider.density = 1;
         collider.restitution = 0
         collider.friction = 0.2;
         collider.radius = r;
 
-        if(this.enableContact){
-            node.addComponent(ColliderListener);
-        }
+        // sensor collider模拟，不需这样来监听
+        // body.enabledContactListener = false;
+        // if(this.enableContact){
+        //     node.addComponent(ColliderListener);
+        // }
         return body;
     }
 
