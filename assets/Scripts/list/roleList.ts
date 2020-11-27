@@ -9,7 +9,7 @@ const MAX_SCALE = 1.5;
 const SPACE_X = 30;
 
 @ccclass
-export default class NewClass extends ScaleList {
+export default class RoleScrollList extends ScaleList {
 
     startCtr: Start = null;
     onLoad () {

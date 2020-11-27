@@ -17,6 +17,9 @@ export default class Start extends cc.Component{
     
     role:Role;
     onLoad () {
+        let transisionNode = cc.find('Transition');
+        cc.game.addPersistRootNode(transisionNode);
+
         cc.director.preloadScene("Main");
         this.prepare();
     }

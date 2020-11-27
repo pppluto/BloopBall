@@ -338,9 +338,9 @@ export default class LiquidBox2dTest extends cc.Component {
     }
     onDestroy() {
         cc.log('onDestroy');
-        const phyMgr = cc.director.getPhysicsManager();
-        const world = phyMgr['_world'];
-        world.DestroyParticleSystem(particleSystem);
-        particleSystem = null;
+        // const phyMgr = cc.director.getPhysicsManager();
+        // const world = phyMgr['_world'];
+        // world.DestroyParticleSystem(particleSystem);
+        // particleSystem = null;
     }
 }

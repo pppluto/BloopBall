@@ -10,7 +10,7 @@ import PlayerHelper from '../helper/player';
 const {ccclass, property} = cc._decorator;
 
 @ccclass
-export default class NewClass extends cc.Component {
+export default class RoleHost extends cc.Component {
 
     @property(cc.Label)
     nameLabel: cc.Label = null;
