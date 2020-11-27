@@ -2,9 +2,10 @@
 /**
  * 用户管理类，包含积分段位信息，人物解锁信息，?签到信息
  */
+import { recording } from '../common/RecordManager';
 import Storage from '../common/Storage';
 import {Role} from '../roles/RoleMapping'
-import {getMatchByRank,getHighAINumByStreak} from './RankMapping'
+import {RewardConfig,getMatchByRank,getHighAINumByStreak,getRewardByGameRank} from './RankMapping'
 const {USER_RECORD_KEY,USER_UNLOCKED_ROLES_KEY} = Storage;
 
 export interface UserRecord {
@@ -50,7 +51,31 @@ export default class PlayerHelper {
         }
         this.userRecord = userRecord;
     }
-    updateUserRecord(record){
+    getUserRankName(){
+        let {name} = getMatchByRank(this.userRecord.rank);
+        return name;
+
+    }
+    getUserRecord(){
+        return this.userRecord;
+    }
+    updateUserRecordByRank(rank:number){
+        let newRecord = Object.assign({},this.userRecord);
+        let currentStreak = newRecord.streak;
+        // rankRewards: [5,3,2], //排名奖励
+        // winStreakLimit: 4, //最小连胜条件
+        // winStreaks: [1,2,3], //连胜奖励
+        currentStreak += rank === 1 ? 1 : -currentStreak;
+
+        let {reward,bonus} = getRewardByGameRank(rank,currentStreak)
+        console.log('更新玩家排名，胜利积分,',reward,'连胜次数：',currentStreak,'连胜奖励：',bonus)
+        newRecord.rank += reward+bonus;
+        newRecord.streak = currentStreak;
+        this.userRecord = newRecord;
+        
+        Storage.saveItem(USER_RECORD_KEY, newRecord);
+    }
+    updateUserRecord(record:UserRecord){
         let old = this.userRecord;
         let newRecord = {...old,...record};
         this.userRecord = newRecord

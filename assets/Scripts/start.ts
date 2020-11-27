@@ -1,10 +1,14 @@
-import PlayerHelper from './helper/player';
+import PlayerHelper,{UserRecord} from './helper/player';
 import { Role } from './roles/RoleMapping';
+import { getMatchByRank } from './helper/RankMapping'
 import Global from './global'
 const {ccclass,property} = cc._decorator;
 
 @ccclass
 export default class Start extends cc.Component{
+
+    @property(cc.Label)
+    rankLabel: cc.Label;
 
     @property(cc.Node)
     roleListWrapper: cc.Node;
@@ -13,16 +17,22 @@ export default class Start extends cc.Component{
     onLoad () {
         cc.director.preloadScene("Main");
         this.prepare();
+    }
+    prepare(){
+        //初始化用户信息
+        PlayerHelper.instance.setup();
 
+        let userRecord:UserRecord = PlayerHelper.instance.getUserRecord();
+
+        let {name} = getMatchByRank(userRecord.rank)
+        this.rankLabel.string = name + ':' + userRecord.rank;
+
+        //解锁列表
         let list = this.roleListWrapper.children[0];
         if(!list) return;
 
         let roleListJs = list.getComponent('ScaleList');
         roleListJs.startCtr = this;
-    }
-    prepare(){
-        //初始化用户信息
-        PlayerHelper.instance.setup();
     }
     chooseRole(){
         this.roleListWrapper.active = true;

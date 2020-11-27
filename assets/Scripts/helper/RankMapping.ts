@@ -6,7 +6,7 @@
 export const RewardConfig = {
     rankRewards: [5,3,2], //排名奖励
     winStreakLimit: 4, //最小连胜条件
-    winStreaks: [1,2,3], //连胜奖励
+    winStreakBonus: [1,2,3], //连胜奖励
     minusBonus: 100,
     majorBonus: 200,
 }
@@ -41,6 +41,19 @@ export const getMatchByRank = (rank):MatchConfig =>{
     return RankMaps[0];
 }
 
+interface WinReward{
+    reward:number,
+    bonus: number
+}
+export const getRewardByGameRank = (rank,streak):WinReward => {
+    let {rankRewards,winStreakLimit,winStreakBonus} = RewardConfig;
+    let reward = rankRewards[rank - 1] || 0;
+    let bonus = 0;
+    if(streak >= winStreakLimit) {
+        bonus = winStreakBonus[streak - winStreakLimit] || 0;
+    }
+    return {reward,bonus};
+}
 export const RankMaps = [
     {
         name:'无段位',

@@ -148,9 +148,20 @@ export default class NewClass extends cc.Component {
         this.playerFinish = true;
         this.gameBoard.active = true;
         this.gameHint.string = `您获得第${this.playerRank}名`;
+
+        let rankName = PlayerHelper.instance.getUserRankName()
+        PlayerHelper.instance.updateUserRecordByRank(this.playerRank);
+        let newRankName = PlayerHelper.instance.getUserRankName();
+        if(rankName !== newRankName){
+            this.gameHint.string += `\n段位升级${rankName} -> ${newRankName}`
+        }
+
     }
     restart(){
         cc.director.loadScene('Main');
+    }
+    relaunch(){
+        cc.director.loadScene('Start');
     }
     autoUseSkill(){
         let players = this.balls.filter((_,v) => v !== this.playerIndex)
@@ -171,7 +182,7 @@ export default class NewClass extends cc.Component {
         
     }
     prepareBalls(){
-        let player_num = 1;
+        let player_num = 2;
         let yPosition = 300;
         let xPosition = 400;
         this.balls = [];
