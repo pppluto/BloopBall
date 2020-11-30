@@ -9,13 +9,12 @@ iOS巨卡
 
 - scripts
 
-  - checkin 签到
-  - roles 角色相关(解锁/未解锁, 角色技能配置)
-    - AI
-  - rank 段位/排行
+  - roles 角色相关(角色技能配置，球表现，技能节点host)
   - controller //player,camera,game
   - common // 广告，统计，录屏。。。
   - barrier //障碍相关的东西
+  - helper // ai，本地用户，比赛配置，签到等辅助
+  - experiment // 实验测试
     global
     config
 

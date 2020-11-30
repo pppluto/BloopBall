@@ -14,7 +14,9 @@ export default class Start extends cc.Component{
     roleListWrapper: cc.Node;
     @property(cc.Node)
     rankListWrapper: cc.Node;
-    
+    @property(cc.Node)
+    checkNode: cc.Node;
+
     role:Role;
     onLoad () {
         let transisionNode = cc.find('Transition');
@@ -40,13 +42,20 @@ export default class Start extends cc.Component{
         roleListJs.startCtr = this;
     }
     showRankList(){
+        this.hideList()
         this.rankListWrapper.active = true;
+    }
+    showCheck(){
+        this.hideList()
+        this.checkNode.active = true;
     }
     hideList(){
         this.roleListWrapper.active = false;
         this.rankListWrapper.active = false;
+        this.checkNode.active = false;
     }
     chooseRole(){
+        this.hideList()
         this.roleListWrapper.active = true;
     }
     choosedRole(role){

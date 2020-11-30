@@ -76,6 +76,12 @@ export default class PlayerHelper {
         
         Storage.saveItem(USER_RECORD_KEY, newRecord);
     }
+    addCoins(coin){
+        console.log('获得金币',coin)
+        this.userRecord.coins += coin
+        
+        Storage.saveItem(USER_RECORD_KEY, this.userRecord);
+    }
     updateUserRecord(record:UserRecord){
         let old = this.userRecord;
         let newRecord = {...old,...record};
