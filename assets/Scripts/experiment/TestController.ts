@@ -23,7 +23,7 @@ cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
 export default class NewClass extends cc.Component {
 
     @property(cc.Prefab)
-    ball2: cc.Prefab;
+    ball2: cc.Prefab = null;
 
     player: cc.Node;
     // LIFE-CYCLE CALLBACKS:

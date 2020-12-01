@@ -4,10 +4,10 @@ const {ccclass,property} = cc._decorator
 export default class NodePool extends cc.Component{
 
     @property(cc.Prefab)
-    prefab: cc.Prefab;
+    prefab: cc.Prefab = null;
 
     @property(cc.Float)
-    size: 0;
+    size = 0;
 
     idx = 0;
     initList: cc.Node[] = []

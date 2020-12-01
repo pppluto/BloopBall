@@ -29,6 +29,10 @@ export default class NewClass extends cc.Component {
     onLoad () {
        
     }
+    prepare(){
+        this.scrollContentLayout = this.scrollContent.getComponent(cc.Layout);
+        this.updateLayout();
+    }
     onScroll = (e) => {
         if(this.scrollList.isScrolling()) {
             this.scrollEndHandled = false;

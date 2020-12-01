@@ -13,9 +13,8 @@ export default class RoleScrollList extends ScaleList {
 
     startCtr: Start = null;
     onLoad () {
+        this.prepare();
         this.updateScrollSize(800,500)
-        this.scrollContentLayout = this.scrollContent.getComponent(cc.Layout);
-        this.updateLayout();
         this.renderItems();
         this.node.on('scrolling',this.onScroll,this);
         this.node.on('scroll-ended',this.onScrollEnd,this);

@@ -8,14 +8,14 @@ const {ccclass,property} = cc._decorator;
 export default class Start extends cc.Component{
 
     @property(cc.Label)
-    rankLabel: cc.Label;
+    rankLabel: cc.Label = null;
 
     @property(cc.Node)
-    roleListWrapper: cc.Node;
+    roleListWrapper: cc.Node = null;
     @property(cc.Node)
-    rankListWrapper: cc.Node;
+    rankListWrapper: cc.Node = null;
     @property(cc.Node)
-    checkNode: cc.Node;
+    checkNode: cc.Node = null;
 
     role:Role;
     onLoad () {

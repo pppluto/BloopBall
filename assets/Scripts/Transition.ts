@@ -8,9 +8,9 @@ const platformCtx = {
     }
 }
 @ccclass
-export default class Start extends cc.Component{
+export default class Transition extends cc.Component{
     @property(cc.Sprite)
-    sceneSpriteHolder: cc.Sprite
+    sceneSpriteHolder: cc.Sprite = null;
 
     previousSceneName: string = '';
     onLoad(){
