@@ -59,7 +59,8 @@ export const getRewardByGameRank = (gameRank,userRecord:UserRecord):WinReward =>
     let bonus = 0;
     let coins = 0;
     if(streak >= winStreakLimit) {
-        bonus = winStreakBonus[streak - winStreakLimit] || 0;
+        let bonusIndex = Math.min(streak - winStreakLimit,winStreakBonus.length-1)
+        bonus = winStreakBonus[bonusIndex];
     }
     let rankName = getMatchByRank(rank).name;
 

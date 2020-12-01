@@ -44,6 +44,7 @@ export default class Ball extends cc.Component {
     skinSpritesCache: cc.Asset | cc.Asset[] = []
 
     isAI: boolean = false;
+    needSyncAngle: boolean = false;
     // use this for initialization
     onLoad(){
         // this.prepare();
@@ -101,7 +102,7 @@ export default class Ball extends cc.Component {
             spheres.push( sphere );
           
             let motorOffsetVec = cc.v2(-posX,-posY);
-
+            // distance + motor
             let joint = sphere.node.addComponent(cc.DistanceJoint);
             joint.distance = aroundDistance;
             joint.dampingRatio = 1;
@@ -113,6 +114,30 @@ export default class Ball extends cc.Component {
             motorJoint.maxTorque = 300
             motorJoint.connectedBody = spheres[0];
 
+
+            //distance (注意旋转node，恒力的调整)
+            // let joint = sphere.node.addComponent(cc.DistanceJoint);
+            // joint.connectedBody = spheres[0];
+            // joint.distance = motorOffset;
+            // joint.dampingRatio = 1;
+            // joint.frequency = 10;
+            // if (i > 0) {
+            //     joint = sphere.node.addComponent(cc.DistanceJoint);
+            //     joint.connectedBody = spheres[spheres.length - 2];
+            //     joint.distance = aroundDistance;
+            //     joint.dampingRatio = 1;
+            //     joint.frequency = 0;
+            // }
+
+            // if (i === particleNumber - 1) {
+            //     joint = spheres[1].node.addComponent(cc.DistanceJoint);
+            //     joint.connectedBody = sphere;
+            //     joint.distance = aroundDistance;
+            //     joint.dampingRatio = 1;
+            //     joint.frequency = 0;
+            // }
+            // this.needSyncAngle = true;
+          
             sphere.node.parent = this.node;
         }
         for (let i = 0; i<particleNumber; i++) {
@@ -357,6 +382,10 @@ export default class Ball extends cc.Component {
     update (dt) {
         if(this.spheres.length < 2) return;
         this.updateMeshVertex();
+
+        if(this.needSyncAngle){
+            this.followRotate();
+        }
         // let body = this.spheres[0];
         // if(!body) return;
         // let targetPos = body.getWorldCenter()

@@ -52,7 +52,7 @@ export const RoleSkinMapping:SMType = {
             {name:'body'},
             {name:'eye',x: 0,y: 0.2},
             {name:'hair',x: 0,y: 1.0},
-            {name:'tail',x: -0.9,y: -0.4,isBack:true},
+            {name:'tail',x: -0.9,y: -0.3,isBack:true},
         ],
         skill: {
             name:'spider',
