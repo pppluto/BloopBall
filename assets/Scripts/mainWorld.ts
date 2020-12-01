@@ -1,5 +1,6 @@
 // http://www.emanueleferonato.com/2011/10/04/create-a-terrain-like-the-one-in-tiny-wings-with-flash-and-box2d-%E2%80%93-adding-more-bumps/
-import { Barrier, BarrierConfig, BarrierList, BarrierMapping, BarrierRegular, BarrierType, NegtiveBarrierList, NertualBarrierList, PositiveBarrierList } from './barrier/Barrier';
+import { Barrier, BarrierConfig, BarrierMapping, BarrierRegular, BarrierType } from './barrier/Barrier';
+import { NegtiveBarrierList, NertualBarrierList, PositiveBarrierList } from './barrier/Barrier';
 import { BarrierHost } from './barrier/barrierHost';
 
 
