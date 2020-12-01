@@ -143,7 +143,7 @@ export default class BounceBall extends cc.Component{
         ctx.close();
         ctx.fill();
         ctx.stroke();
-    },
+    }
 
     expandPosition (pos) {
         return pos.mul(1.3);

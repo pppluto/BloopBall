@@ -73,7 +73,6 @@ export default class Ball extends cc.Component {
         let sphereSize = this.sphereSize;
 
         let particleAngle = (2*Math.PI)/particleNumber;
-        let particleDistance =  Math.sin(particleAngle) * motorOffset * Math.sin((Math.PI - particleAngle)/2);
 
         let spheres = [];
         // let body =  this._createSphere(0, 0, this.centerSize,null);

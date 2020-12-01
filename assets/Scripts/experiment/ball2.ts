@@ -1,5 +1,5 @@
 
-import ColliderListener from './colliderListener';
+import ColliderListener from '../roles/colliderListener';
 
 const { ccclass, property } = cc._decorator;
 
@@ -12,16 +12,11 @@ export default class Ball extends cc.Component {
     meshRenderer: cc.MeshRenderer = null;
 
     @property(cc.SpriteFrame)
-    spriteFrame1: cc.SpriteFrame = null;
-    @property(cc.SpriteFrame)
-    spriteFrame2: cc.SpriteFrame = null;
-    
-    @property(cc.Float)
-    particleNumber: number = 8
-    @property(cc.Float)
-    particleRadius: number = 15
-    @property(cc.Float)
-    sphereSize: number = 9
+    spriteFrame: cc.SpriteFrame = null;
+
+    particleNumber: number = 12
+    particleRadius: number = 26
+    sphereSize: number = 8
 
     @property(cc.Node)
     beautyNode: cc.Node = null;
@@ -63,7 +58,7 @@ export default class Ball extends cc.Component {
             joint.connectedBody = spheres[0];
             joint.distance = particleRadius;
             joint.dampingRatio = 0.5;
-            joint.frequency = 4;
+            joint.frequency = 15;
 
             if (i > 0) {
                 joint = sphere.node.addComponent(cc.DistanceJoint);
@@ -85,10 +80,8 @@ export default class Ball extends cc.Component {
         }
 
         this.spheres = spheres;
-        let spriteFrame = this.spriteFrame1;
-        if(this.enableContact) {
-            spriteFrame = this.spriteFrame2
-        }
+        let spriteFrame = this.spriteFrame
+        
         this.bodySpriteFrame = spriteFrame;
         if (spriteFrame) {
             let newTexture = spriteFrame.getTexture();
@@ -150,6 +143,28 @@ export default class Ball extends cc.Component {
 
         this.meshRenderer.mesh = mesh;
         this._initMesh = true;
+    }
+    getBallMass(){
+        let mass = this.spheres.reduce((preMass,body:cc.RigidBody) => {
+            return preMass + body.getMass();
+        },0)
+        return mass;
+    }
+    jump(){
+        let body = this.spheres[0];
+        let center = body.getWorldCenter();
+        let gravity = 10;
+        let vec = cc.v2(0,40);
+        this.spheres.forEach((b) => {
+            let m = b.getMass();
+            let bcenter = b.getWorldCenter();
+            let impluse = vec.mul(m * gravity);
+            b.applyLinearImpulse(impluse,bcenter,true);  
+        })
+        // let mass = this.getBallMass()
+        // let gravity = 10;
+        // let vec = cc.v2(0,40).mul(mass * gravity);
+        // body.applyLinearImpulse(vec,center,true);     
     }
     smoothPoints(points) {
   
@@ -232,7 +247,7 @@ export default class Ball extends cc.Component {
             if(index === 0){
 
             } else if(index === vertices.length -1){
-                indices.push(0,1,index)
+                indices.push(0,index,1)
             } else {
                 indices.push(0,index,index + 1)
             }
@@ -256,8 +271,19 @@ export default class Ball extends cc.Component {
         }
     }
     update (dt) {
+        if(!this.spheres.length) return;
         this.updateMeshVertex();
         this.followRotate();
+
+        let body = this.spheres[0];
+        let velocity = body.linearVelocity
+        let angular = body.angularVelocity;
+        // if(velocity.x <= 20){
+        //     body.linearVelocity = cc.v2(20,velocity.y);
+        // }
+        // if(angular < 50){
+        //     body.angularVelocity = 50;
+        // }
     }
     getRawPoints(){
         let center = this.spheres[0];

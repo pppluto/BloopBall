@@ -48,6 +48,7 @@ export default class Boundary extends cc.Component {
     }
     _addBound (node, x, y, width, height) {
         let collider = node.addComponent(cc.PhysicsBoxCollider);
+        collider.friction = 0.2;
         collider.offset.x = x;
         collider.offset.y = y;
         collider.size.width = width;
