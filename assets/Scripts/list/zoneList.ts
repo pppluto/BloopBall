@@ -13,7 +13,7 @@ export default class ZoneScrollList extends ScaleList {
         this.updateScrollSize(800,500)
         this.renderItems();
         this.node.on('scrolling',this.onScroll,this);
-        this.node.on('scroll-ended',this.onScrollEnd,this);
+        this.node.on('scroll-ended',this.onScrollEndTmp,this);
     }
 
     renderItems(){
@@ -46,7 +46,13 @@ export default class ZoneScrollList extends ScaleList {
         let sepW =  (roleNum - 1) * this.spaceX
         this.scrollContent.width = padding * 2 + (roleNum - 1) * itemW + this.maxScale * itemW + sepW
     }
+    onScrollEndTmp(){
+        let index = this.onScrollEnd();
+        if(index < 0) return;
 
+        let zone = ZoneList[index];
+        this.startCtr.chooseZone(zone);
+    }
     onZoneClick(e,customEventData){
         let index = Number(customEventData);
         let zone = ZoneList[index];

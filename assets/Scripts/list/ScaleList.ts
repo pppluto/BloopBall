@@ -41,7 +41,7 @@ export default class ScaleList extends cc.Component {
         this.updateItem();
     }
     onScrollEnd() {
-        if(this.scrollEndHandled) return;
+        if(this.scrollEndHandled) return -1;
 
         this.scrollEndHandled = true;
         let contentOffsetX = this.scrollList.getScrollOffset().x;
@@ -51,7 +51,6 @@ export default class ScaleList extends cc.Component {
 
         let offset = index * itemSep;
         this.scrollList.scrollToOffset(cc.v2(offset,0),0.2);
-        console.log('super',index)
         return index;
     }
 

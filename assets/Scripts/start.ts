@@ -62,11 +62,11 @@ export default class Start extends cc.Component{
     }
     chooseRole(){
         // this.hideList()
+        this.zoneList.active = false;
         this.roleListWrapper.active = true;
         let list = this.roleListWrapper.children[0];
         let roleListJs = list.getComponent('roleList');
         roleListJs.renderItems();
-        console.log('123')
     }
     chooseZone(zone){
         Global.zoneUsed = zone;

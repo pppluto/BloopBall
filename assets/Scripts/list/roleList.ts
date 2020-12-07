@@ -18,7 +18,10 @@ export default class RoleScrollList extends ScaleList {
         this.node.on('scrolling',this.onScroll,this);
         this.node.on('scroll-ended',this.onScrollEnd,this);
     }
-
+    onEnable(){
+        this.scrollList.scrollToOffset(cc.v2(0,0));
+        this.updateItem();
+    }
     renderItems(){
         this.scrollContent.removeAllChildren();
         let unlockedRoles = PlayerHelper.getUnlockedRoleIds();
