@@ -311,7 +311,9 @@ export default class BallController extends cc.Component{
         if(otherGroup ==='ground' || otherGroup ==='block' ){
             this._collideCount -= 1;
             if(otherGroup === DebuffBit.BLOCK){
-                this.removeFlag(DebuffBit.BLOCK)
+                if(this._collideCount <= 0){
+                    this.removeFlag(DebuffBit.BLOCK);
+                } 
                 this.endBarrierEffect(otherCollider);
             }
         }
@@ -332,7 +334,10 @@ export default class BallController extends cc.Component{
         this.stateFlag |=  bit;
     }
     removeFlag(bit:DebuffBit) {
-        this.stateFlag ^=  bit;
+        let flag = this.stateFlag;
+        //先标记位，再异或去除
+        flag |= bit
+        this.stateFlag =  flag ^ bit;
     }
     winGame(){
         this._finished = true;

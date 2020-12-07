@@ -28,3 +28,6 @@
 新建障碍host节点，将相关障碍prefab挂在子节点，(prefab需要将碰撞组件挂在最顶层)，prefab挂上colliderListener，通过转发到host处理逻辑 (技能类似)
 
 障碍和球碰撞时，障碍表现(barrierHost)，球表现(ballControl)
+
+
+金币的生成，形状，动画，

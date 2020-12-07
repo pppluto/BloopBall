@@ -28,21 +28,22 @@ export default class RoleHost extends cc.Component {
     // onLoad () {}
 
     start () {
-        this.nameLabel.string = this.role.name;
-        this.cost.string =  this.locked?`${this.role.cost}解锁`:'已解锁';
+        this.nameLabel.string = this.role.desc;
+        this.cost.string =  this.locked?`未解锁`:'已解锁';
         this.btnLabel.string = this.locked?`解锁`:'选择';
     }
 
     onRoleChoose(){
         if(this.locked) {
-            let success = PlayerHelper.instance.unlockRole(this.role);
-            if(!success){
-                console.log('解锁失败')
-                return;
-            }
-            console.log('解锁成功')
+            // let success = PlayerHelper.instance.unlockRole(this.role);
+            // if(!success){
+            //     console.log('解锁失败')
+            //     return;
+            // }
+            console.log('还没解锁')
+        } else {
+            this.startCtr.choosedRole(this.role)
         }
-        this.startCtr.choosedRole(this.role)
     }
     // update (dt) {}
 }

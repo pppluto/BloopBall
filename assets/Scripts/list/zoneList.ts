@@ -1,14 +1,11 @@
-import {RoleList} from '../roles/RoleMapping';
+import {ZoneList} from '../helper/ZoneMapping';
 import ScaleList from './ScaleList';
 import Start from '../start'
-import PlayerHelper from '../helper/player';
-import Global from '../global';
-import { ZoneMapping } from '../helper/ZoneMapping';
 
 const {ccclass, property} = cc._decorator;
 
 @ccclass
-export default class RoleScrollList extends ScaleList {
+export default class ZoneScrollList extends ScaleList {
 
     startCtr: Start = null;
     onLoad () {
@@ -20,30 +17,40 @@ export default class RoleScrollList extends ScaleList {
     }
 
     renderItems(){
-        this.scrollContent.removeAllChildren();
-        let unlockedRoles = PlayerHelper.getUnlockedRoleIds();
-        let zone = Global.zoneUsed;
-        let {avaliableRoleIds,defaultRoleId} = ZoneMapping[zone.name]
         let itemW = this.contentItem.data.width;
         let padding = (this.scrollList.node.width - itemW * this.maxScale) / 2;
 
-        let avaliableRoleList = RoleList.filter(v => avaliableRoleIds.includes(v.id))
-
-        let roleNum = avaliableRoleList.length;
+        let roleNum = ZoneList.length;
         for (let index = 0; index < roleNum; index++) {
             const element = cc.instantiate(this.contentItem);
             if(index === 0){
                 element.scale = this.maxScale;
             }
-            let jsc = element.getComponent('roleHost');
-            let role =  avaliableRoleList[index];
-            jsc.role = role;
+            let jsc = element.getComponent('zoneHost');
+            let zone =  ZoneList[index];
+            jsc.zone = zone;
             jsc.startCtr = this.startCtr;
-            jsc.locked = role.id !== defaultRoleId && !unlockedRoles.includes(role.id)
+
+            
+            var clickEventHandler = new cc.Component.EventHandler();
+            clickEventHandler.target = this.node;
+            clickEventHandler.component = "zoneList";
+            clickEventHandler.handler = "onZoneClick";
+            clickEventHandler.customEventData = index + '';
+
+            let btn = element.addComponent(cc.Button);
+            btn.clickEvents.push(clickEventHandler);
+
             this.scrollContent.addChild(element);
         }
         let sepW =  (roleNum - 1) * this.spaceX
         this.scrollContent.width = padding * 2 + (roleNum - 1) * itemW + this.maxScale * itemW + sepW
+    }
+
+    onZoneClick(e,customEventData){
+        let index = Number(customEventData);
+        let zone = ZoneList[index];
+        this.startCtr.chooseZone(zone);
     }
     start () {
 

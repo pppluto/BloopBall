@@ -4,14 +4,13 @@
 //  - https://docs.cocos.com/creator/manual/en/scripting/reference/attributes.html
 // Learn life-cycle callbacks:
 //  - https://docs.cocos.com/creator/manual/en/scripting/life-cycle-callbacks.html
-
 const {ccclass, property} = cc._decorator;
 
 const MAX_SCALE = 1.5;
 const SPACE_X = 30;
 
 @ccclass
-export default class NewClass extends cc.Component {
+export default class ScaleList extends cc.Component {
 
     
     @property(cc.ScrollView)
@@ -22,8 +21,10 @@ export default class NewClass extends cc.Component {
 
     @property(cc.Prefab)
     contentItem: cc.Prefab = null
-    // LIFE-CYCLE CALLBACKS:
-
+    @property(cc.Float)
+    spaceX = SPACE_X
+    @property(cc.Float)
+    maxScale = MAX_SCALE
     scrollContentLayout: cc.Layout = null;
     scrollEndHandled: boolean = true;
     onLoad () {
@@ -39,42 +40,36 @@ export default class NewClass extends cc.Component {
         }
         this.updateItem();
     }
-    onScrollEnd = () => {
+    onScrollEnd() {
         if(this.scrollEndHandled) return;
 
-
-        return;
-        //FIXME:有问题
         this.scrollEndHandled = true;
         let contentOffsetX = this.scrollList.getScrollOffset().x;
         let itemW = this.contentItem.data.width;
-        let itemSep = SPACE_X + itemW;
+        let itemSep = this.spaceX + itemW;
         let index = Math.round(Math.abs(contentOffsetX) / itemSep);
 
-        console.log('in',index);
-        let offset = index * itemW;
-        console.log('offset',offset,contentOffsetX)
+        let offset = index * itemSep;
         this.scrollList.scrollToOffset(cc.v2(offset,0),0.2);
+        console.log('super',index)
+        return index;
     }
-    onDestroy(){
-        this.node.off('scrolling',this.onScroll,this);
-        this.node.off('scroll-ended',this.onScrollEnd,this);
-    }
+
     updateScrollSize(width,height) {
         this.scrollList.node.setContentSize(width,height);
     }
     updateLayout(){
         let itemW = this.contentItem.data.width;
-        let padding = (this.scrollList.node.width - itemW * MAX_SCALE) / 2;
+        let padding = (this.scrollList.node.width - itemW * this.maxScale) / 2;
         this.scrollContentLayout.paddingLeft = padding;
         this.scrollContentLayout.paddingRight = padding;
-        this.scrollContentLayout.spacingX = SPACE_X;
+        this.scrollContentLayout.spacingX = this.spaceX;
     }
     updateItem(){
         let contentOffsetX = this.scrollList.getScrollOffset().x;
         let itemW = this.contentItem.data.width;
-        let itemSep = SPACE_X + itemW;
-        let padding = (this.scrollList.node.width - itemW * MAX_SCALE) / 2;
+        let itemSep = this.spaceX + itemW;
+        let padding = (this.scrollList.node.width - itemW * this.maxScale) / 2;
         let index = Math.abs(Math.round(contentOffsetX / itemSep));
         index = Math.max(0,index);
 
@@ -84,7 +79,7 @@ export default class NewClass extends cc.Component {
         childs.forEach(v => {
             let node = v;
             let offset = Math.abs(node.x + contentOffsetX - padding - node.width/2);
-            let scale = MAX_SCALE - Math.min(1,offset/itemSep) * (MAX_SCALE - 1);
+            let scale = this.maxScale - Math.min(1,offset/itemSep) * (this.maxScale - 1);
             node.scale = scale;
         });
     }

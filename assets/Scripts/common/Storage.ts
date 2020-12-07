@@ -3,7 +3,9 @@ export default class Storage {
 
     public static AI_CONFIG_KEY = 'BB_ai_config';
     public static USER_RECORD_KEY = 'BB_user_record';
-    public static USER_UNLOCKED_ROLES_KEY = 'BB_user_unlocked_roles';
+    public static USER_UNLOCKED_ROLES_KEY = 'BB_USER_UNLOCKED_ROLES_KEY';
+    public static USER_UNLOCKED_ZONE_KEY = 'BB_USER_UNLOCKED_ZONE_KEY';
+    public static USER_UNLOCKED_SKILL_KEY_PREFIX = 'BB_USER_UNLOCKED_ROLE_SKILL_KEY_PREFIX';
 
     public static get instance() {
         if (!this._instance) {

@@ -2,6 +2,7 @@ import PlayerHelper,{UserRecord} from './helper/player';
 import { Role } from './roles/RoleMapping';
 import { getMatchByRank } from './helper/RankMapping'
 import Global from './global'
+import { Zone, ZoneList } from './helper/ZoneMapping';
 const {ccclass,property} = cc._decorator;
 
 @ccclass
@@ -12,18 +13,21 @@ export default class Start extends cc.Component{
 
     @property(cc.Node)
     roleListWrapper: cc.Node = null;
+
     @property(cc.Node)
-    rankListWrapper: cc.Node = null;
+    zoneList: cc.Node = null;
     @property(cc.Node)
     checkNode: cc.Node = null;
 
     role:Role;
+    zone:Zone;
     onLoad () {
         let transisionNode = cc.find('Transition');
         cc.game.addPersistRootNode(transisionNode);
 
         cc.director.preloadScene("Main");
         this.prepare();
+        this.zone = ZoneList[0];
     }
     prepare(){
         //初始化用户信息
@@ -32,18 +36,20 @@ export default class Start extends cc.Component{
         let userRecord:UserRecord = PlayerHelper.instance.getUserRecord();
 
         let {name} = getMatchByRank(userRecord.rank)
-        this.rankLabel.string = `${name}\n段位分:${userRecord.rank}\n金币${userRecord.coins}`;
+        this.rankLabel.string = `${name}\n金币${userRecord.coins}`;
 
         //解锁列表
         let list = this.roleListWrapper.children[0];
         if(!list) return;
 
-        let roleListJs = list.getComponent('ScaleList');
+        let roleListJs = list.getComponent('roleList');
         roleListJs.startCtr = this;
+
+        let zoneListJs = this.zoneList.getComponent('zoneList');
+        zoneListJs.startCtr = this;
     }
     showRankList(){
         this.hideList()
-        this.rankListWrapper.active = true;
     }
     showCheck(){
         this.hideList()
@@ -51,12 +57,19 @@ export default class Start extends cc.Component{
     }
     hideList(){
         this.roleListWrapper.active = false;
-        this.rankListWrapper.active = false;
         this.checkNode.active = false;
+        this.zoneList.active = true;
     }
     chooseRole(){
-        this.hideList()
+        // this.hideList()
         this.roleListWrapper.active = true;
+        let list = this.roleListWrapper.children[0];
+        let roleListJs = list.getComponent('roleList');
+        roleListJs.renderItems();
+        console.log('123')
+    }
+    chooseZone(zone){
+        Global.zoneUsed = zone;
     }
     choosedRole(role){
         Global.roleUsed = role;

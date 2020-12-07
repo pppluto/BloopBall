@@ -7,6 +7,22 @@ export const BarrierRegular = {
     spaceRange: [10,20], //以球为单位
 
 }
+export const HighBarrierRegular = {
+    groupsPerGame: 5,
+    groupNumPool: [1,1,1,1,1,2,2,2,3,3],  // 每组1/2/3个高台的概率为0.5/0.3/0.2
+    groupSpaceRange: [1,1,5], //屏幕为单位
+    xSpaceRange: [0.5,1], //高台宽度单位
+    ySpaceRange: [1.5,3], //角色单位
+}
+
+export const CoinRegular = {
+    highBarrierPosibility: 0.8,
+    aroundNegtivePosibility: 0.4,
+    otherBarrierPosibility: 0.2,
+    normalPosibility: 0.1,
+    numberRange: [200,300],
+}
+
 //fixme
 export enum BarrierEffectType {
     LINEAR,

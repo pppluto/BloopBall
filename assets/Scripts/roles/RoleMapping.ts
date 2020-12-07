@@ -11,7 +11,9 @@ export interface SkillEffect{
     duration?: number
 }
 export interface SkillConfig {
+    id: number,
     name: string,
+    iconName: string,
     spinePath?: string,
     effect?: SkillEffect,
     cd?: number // 秒
@@ -30,16 +32,35 @@ export interface SkinBody{
 export interface RoleSKinConfig {
     name: string,
     bodies: SkinBody[],
-    skill?: SkillConfig,
+    emotion?: string[],
     bundleName?: string //默认会是resources
 }
 
 export interface Role{
     name: string,//角色名，通过这个匹配对应皮肤和技能
     id: number, //标记
-    cost: number, //解锁所需金币
+    desc?: string,
+    cost?: number, //解锁所需金币
+    advanceSkillNames?: string[],
+    defaultSkillName: string,
     image?: string
 }
+
+//技能icon
+type SkillMType = Record<string,SkillConfig>;
+export const SkillMapping:SkillMType = {
+    spider:{
+        id: 1,
+        name:'spider',
+        iconName: 'net',
+        spinePath: 'spines/spider/spider',
+        cd: 2,
+        effect: {
+            range: [0,200]
+        }
+    },
+}
+
 /**
  * 默认第一个body为主皮肤
  * 资源默认都放在resources bundle下
@@ -54,14 +75,7 @@ export const RoleSkinMapping:SMType = {
             {name:'hair',x: 0,y: 1.0},
             {name:'tail',x: -0.9,y: -0.3,isBack:true},
         ],
-        skill: {
-            name:'spider',
-            spinePath: 'spines/spider/spider',
-            cd: 2,
-            effect: {
-                range: [0,200]
-            }
-        },
+        emotion: ['normal','angry','smile','sad'],
         bundleName:'resources'
     }
 }
@@ -70,21 +84,29 @@ export const RoleList:Role[] = [
     {
         name: 'spider',
         id: 1,
-        cost: 0,
+        defaultSkillName: 'spider',
+        advanceSkillNames: [],
+        desc: 'spider',
     },
     {
-        name: 'monkey',
+        name: 'spider',
         id: 2,
-        cost: 100
+        desc: 'spider2',
+        defaultSkillName: 'spider',
+        advanceSkillNames: []
     },
     {
-        name: 'tiger',
+        name: 'spider',
+        desc: 'spider3',
         id: 3,
-        cost: 200
+        defaultSkillName: 'spider',
+        advanceSkillNames: []
     },
     {
-        name: 'ironMan',
+        name: 'spider',
+        desc: '钢铁侠',
         id: 4,
-        cost: 500
+        defaultSkillName: 'spider',
+        advanceSkillNames: []
     },
 ]

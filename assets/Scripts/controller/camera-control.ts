@@ -30,8 +30,10 @@ export default class CameraController extends cc.Component {
         this.node.x = Math.max( localTargetPos.x,0);
         // this.node.y = Math.max(localTargetPos.y,this.initY)
 
+        //TODO:摄像头的移动缩放空间限制
         let ratio = targetPos.y / cc.winSize.height;
-        let zoomRatio = 1 + (0.4 - ratio) * 0.1;
+        //越大越近
+        let zoomRatio = Math.min(1, 1 + (0.5 - ratio) * 0.6);
         this.camera.zoomRatio = zoomRatio;
         this.node.y = this.initY + cc.winSize.height/2 * (1-zoomRatio);
     }

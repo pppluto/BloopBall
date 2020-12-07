@@ -1,9 +1,10 @@
 // http://www.emanueleferonato.com/2011/10/04/create-a-terrain-like-the-one-in-tiny-wings-with-flash-and-box2d-%E2%80%93-adding-more-bumps/
-import { RoleSkinMapping } from '../roles/RoleMapping'
+import { RoleSkinMapping,SkillMapping } from '../roles/RoleMapping'
 import Storage from '../common/Storage'
 import {getAIConfigByLevel} from '../helper/AI';
 import Global from '../global';
 import PlayerHelper from '../helper/player';
+import { ZoneMapping } from '../helper/ZoneMapping';
 
 cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
     let physicsManager = cc.director.getPhysicsManager();
@@ -181,6 +182,10 @@ export default class NewClass extends cc.Component {
         playerCtr.triggerSkill()
         
     }
+    prepareSkillBtn(){
+        let userUsedRole = Global.roleUsed;
+        let unlockSkillNames = PlayerHelper.getUnlockedRoleSkillNames(userUsedRole.id);
+    }
     prepareBalls(){
         let player_num = 2;
         let yPosition = 300;
@@ -191,6 +196,10 @@ export default class NewClass extends cc.Component {
 
         //TODO:随机生成其它的电脑角色
         let userUsedRole = Global.roleUsed;
+        let zoneConfig = ZoneMapping[Global.zoneUsed.name];
+        //关卡可用角色
+        let roleIds = zoneConfig.avaliableRoleIds.filter(i => i !== userUsedRole.id);
+
         let userUsedRoleSkin = userUsedRole ? RoleSkinMapping[userUsedRole.name] :  RoleSkinMapping['spider'];
         for (let index = 0; index < player_num; index++) {
             let player = cc.instantiate(this.motorBall);
@@ -210,7 +219,7 @@ export default class NewClass extends cc.Component {
             bControl.gameCtr = this;
             bControl.isAI = isAI;
             bControl.AILevel = index;
-            bControl.skillConfig = RoleSKinConfig.skill;
+            bControl.skillConfig = SkillMapping[userUsedRole.defaultSkillName];
             this.balls.push(player);
             bControl.init();
 

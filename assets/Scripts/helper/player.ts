@@ -1,13 +1,13 @@
 
 /**
- * 用户管理类，包含积分段位信息，人物解锁信息，?签到信息
+ * 用户管理类，包含积分段位信息，地图，角色，技能解锁信息，?签到信息
  */
-import { recording } from '../common/RecordManager';
 import Storage from '../common/Storage';
 import {Role} from '../roles/RoleMapping'
-import {RewardConfig,getMatchByRank,getHighAINumByStreak,getRewardByGameRank} from './RankMapping'
-const {USER_RECORD_KEY,USER_UNLOCKED_ROLES_KEY} = Storage;
-
+import {getMatchByRank,getHighAINumByStreak,getRewardByGameRank} from './RankMapping'
+const {USER_RECORD_KEY,} = Storage;
+const { USER_UNLOCKED_ROLES_KEY, USER_UNLOCKED_SKILL_KEY_PREFIX} = Storage;
+const {USER_UNLOCKED_ZONE_KEY} = Storage;
 export interface UserRecord {
     rank: number,
     streak: number,
@@ -24,6 +24,32 @@ export default class PlayerHelper {
             this._instance = new PlayerHelper();
         }
         return this._instance;
+    }
+    public static addUnlockZone(id){
+        let zones = PlayerHelper.getUnlockedRoleIds();
+        zones.push(id);
+        Storage.saveItem(USER_UNLOCKED_ZONE_KEY,zones);
+    }
+    public static getUnlockedZoneIds():number[]{
+        let roles =  Storage.getItem(USER_UNLOCKED_ZONE_KEY);
+        if(!(roles instanceof Array)){
+            roles = [];
+        }
+        return roles;
+    }
+    public static addUnlockRoleSkill(roleId,skillName){
+        let key = USER_UNLOCKED_SKILL_KEY_PREFIX+ '_' + roleId;
+        let roles = PlayerHelper.getUnlockedRoleSkillNames(roleId);
+        roles.push(skillName);
+        Storage.saveItem(key,roles);
+    }
+    public static getUnlockedRoleSkillNames(roleId):number[]{
+        let key = USER_UNLOCKED_SKILL_KEY_PREFIX+ '_' + roleId;
+        let skillNames =  Storage.getItem(key);
+        if(!(skillNames instanceof Array)){
+            skillNames = [];
+        }
+        return skillNames;
     }
     public static addUnlockRole(id){
         let roles = PlayerHelper.getUnlockedRoleIds();
