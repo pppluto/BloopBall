@@ -2,6 +2,7 @@
 import ColliderListener from './colliderListener';
 import { RoleSKinConfig,SkinBody } from './RoleMapping'
 import {TagType} from '../mainWorld'
+import Storage from '../common/Storage'
 const { ccclass, property } = cc._decorator;
 
 //余弦定理
@@ -68,6 +69,27 @@ export default class Ball extends cc.Component {
         this.node.x = position.x;
         this.node.y = position.y;
     }
+    updateBallConfig(){
+        let config = Storage.getItem(Storage.BALL_M_CONFIG_KEY) || {};
+        if(config.bounce){
+            this.spheres.forEach(sp => {
+                let motorJoint = sp.getComponent(cc.MotorJoint);
+                if(motorJoint){
+                    motorJoint.maxForce = Number(config.bounce);
+                    motorJoint.apply()
+                }
+            })
+        }
+        if(config.friction){
+            this.spheres.forEach(sp => {
+                let collider = sp.getComponent(cc.PhysicsCircleCollider);
+                if(collider){
+                    collider.friction = Number(config.friction);
+                    collider.apply()
+                }
+            })
+        }
+    }
     prepare() {
         let particleNumber = this.particleNumber;
         let motorOffset = this.motorOffset;
@@ -110,7 +132,7 @@ export default class Ball extends cc.Component {
             
             let motorJoint = sphere.node.addComponent(cc.MotorJoint);
             motorJoint.linearOffset  = motorOffsetVec;
-            motorJoint.maxForce = 300
+            motorJoint.maxForce = 50
             motorJoint.maxTorque = 300
             motorJoint.connectedBody = spheres[0];
 

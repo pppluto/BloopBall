@@ -2,6 +2,9 @@ export default class Storage {
     private static _instance: Storage;
 
     public static AI_CONFIG_KEY = 'BB_ai_config';
+    public static BALL_M_CONFIG_KEY = 'BB_BALL_M_CONFIG_KEY';
+    public static BALL_P_CONFIG_KEY = 'BB_BALL_P_CONFIG_KEY';
+
     public static USER_RECORD_KEY = 'BB_user_record';
     public static USER_UNLOCKED_ROLES_KEY = 'BB_USER_UNLOCKED_ROLES_KEY';
     public static USER_UNLOCKED_ZONE_KEY = 'BB_USER_UNLOCKED_ZONE_KEY';

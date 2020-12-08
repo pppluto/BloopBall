@@ -13,12 +13,17 @@ enum DebuffBit {
     STUNNING = 1 << 1,
     BLOCK = 1 << 2
 }
+interface BallProperty{
+    jumpXImpulse?: number,
+    torque?: number,
+    minXSpeed?: number,
+    maxAngular?:  number,
+}
 @ccclass
 export default class BallController extends cc.Component{
 
     buffState: number = TagType.DEFAULT;
     gameStart: boolean = false;
-    minXSpeed: number = 150;
     AILevel: number = 1;
     prePressTS: number = 1;
     isAI: boolean = false;
@@ -30,6 +35,13 @@ export default class BallController extends cc.Component{
     preSkillTriggerTS: number = 0;
     preBehaveTS: number = 0;
 
+    //球properties，控制
+    ballContorlConfig = {
+        jumpXImpulse:  45,
+        torque: 300,
+        minXSpeed: 150,
+        maxAngular: 600,
+    }
     //TODO: 期望改成 map 结构，或者2进制做与或操作来判断
     // flagStateMap: Map<string,any> = new Map()
     stateFlag: number = 0;
@@ -45,18 +57,16 @@ export default class BallController extends cc.Component{
     init(){
         this.prePressTS = 0;
         if(this.isAI) {
-            let helper = new AIHelper();
-            // helper.config = getAIConfigByLevel(this.AILevel)
-            helper.config = Storage.getItem(Storage.AI_CONFIG_KEY)
-            this.aiHelper = helper;
-
-            let interval = helper.config.behaveInterval || 2;
-            this.schedule(this.autoControl, interval);
+            this.updateAIConfig()
         };
+
+        this.updateBallConfig()
 
     }
     updateAIConfig(){
-        if(!this.aiHelper) return;
+        if(!this.aiHelper) {
+            this.aiHelper = new AIHelper()
+        }
         let config = Storage.getItem(Storage.AI_CONFIG_KEY);
         this.aiHelper.config = config;
 
@@ -65,6 +75,16 @@ export default class BallController extends cc.Component{
         let interval = config.behaveInterval || 2;
         this.schedule(this.autoControl, interval);
 
+    }
+    updateBallConfig(){
+        let config = <BallProperty>Storage.getItem(Storage.BALL_P_CONFIG_KEY) || {};
+        let keys = Object.keys(config);
+        keys.forEach((k) => {
+            let v = config[k];
+            if(v){
+                this.ballContorlConfig[k] = v;
+            }
+        })
     }
     start () {
         let ballJS = this.getComponent(MotorBall);
@@ -104,7 +124,7 @@ export default class BallController extends cc.Component{
         if(this._collideCount <= 0) {
             return;
         }
-        this.applyImpulse(cc.v2(0,45));
+        this.applyImpulse(cc.v2(0,this.ballContorlConfig.jumpXImpulse));
     }
     getBallMass(){
         let mass = this.bodies.reduce((preMass,body:cc.RigidBody) => {
@@ -120,13 +140,14 @@ export default class BallController extends cc.Component{
         let vec = impulse.mul(mass * gravity);
         body.applyLinearImpulse(vec,center,true)
     }
-    applyForce(force=-300){
+    applyForce(){
+        let torque = -this.ballContorlConfig.torque;
         if(this.buffState === TagType.DEBUFF_TAG) {
-            force += 100;
+            torque += 100;
         }
         let body = this.body;
         let mass = this.getBallMass()
-        body.applyTorque(mass * force,true);
+        body.applyTorque(mass * torque,true);
     }
    
     disableSchedule(){
@@ -373,19 +394,19 @@ export default class BallController extends cc.Component{
         let velocity = this.body.linearVelocity;
         let angularV = this.body.angularVelocity;
 
-        if(this.node.y > 600){
-            this.node.y = 600;
+        // if(this.node.y > 600){
+        //     this.node.y = 600;
 
-            this.body.linearVelocity = cc.v2(velocity.x,0);
+        //     this.body.linearVelocity = cc.v2(velocity.x,0);
 
-        }
+        // }
 
-        if(angularV < 600) {
+        if(angularV < this.ballContorlConfig.maxAngular) {
             this.applyForce();
         }
 
-        if(velocity.x <= this.minXSpeed){
-            this.body.linearVelocity = cc.v2(this.minXSpeed,velocity.y);
+        if(velocity.x <= this.ballContorlConfig.minXSpeed){
+            this.body.linearVelocity = cc.v2(this.ballContorlConfig.minXSpeed,velocity.y);
         }
 
         if(this.buffState === TagType.DEBUFF_TAG) {
