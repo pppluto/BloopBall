@@ -48,6 +48,13 @@ export default class Start extends cc.Component{
         let zoneListJs = this.zoneList.getComponent('zoneList');
         zoneListJs.startCtr = this;
     }
+    updateCheck(){
+        let userRecord:UserRecord = PlayerHelper.instance.getUserRecord();
+
+        let {name} = getMatchByRank(userRecord.rank)
+        this.rankLabel.string = `${name}\n金币${userRecord.coins}`;
+
+    }
     showRankList(){
         this.hideList()
     }

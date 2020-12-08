@@ -1,6 +1,6 @@
 import {TagType}from '../mainWorld'
 import GameControl from './gameControl'
-import {SkillConfig} from '../roles/RoleMapping'
+import {Role, SkillConfig} from '../roles/RoleMapping'
 import SkillHost from '../roles/skillHost'
 import AIHelper, { AIConfig,getAIConfigByLevel } from '../helper/AI'
 import Storage from '../common/Storage'
@@ -35,6 +35,8 @@ export default class BallController extends cc.Component{
     preSkillTriggerTS: number = 0;
     preBehaveTS: number = 0;
 
+    playerSeq: number = 0; //玩家序号
+    role: Role;
     //球properties，控制
     ballContorlConfig = {
         jumpXImpulse:  45,
@@ -363,7 +365,7 @@ export default class BallController extends cc.Component{
     winGame(){
         this._finished = true;
         this.disableSchedule();
-        this.gameCtr.playerWin(this.isAI);
+        this.gameCtr.playerWin(this);
     }
     update (dt) {
      

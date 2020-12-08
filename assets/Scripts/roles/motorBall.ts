@@ -71,6 +71,8 @@ export default class Ball extends cc.Component {
     }
     updateBallConfig(){
         let config = Storage.getItem(Storage.BALL_M_CONFIG_KEY) || {};
+        console.log('updateball',config)
+
         if(config.bounce){
             this.spheres.forEach(sp => {
                 let motorJoint = sp.getComponent(cc.MotorJoint);
@@ -132,7 +134,7 @@ export default class Ball extends cc.Component {
             
             let motorJoint = sphere.node.addComponent(cc.MotorJoint);
             motorJoint.linearOffset  = motorOffsetVec;
-            motorJoint.maxForce = 50
+            motorJoint.maxForce = 300
             motorJoint.maxTorque = 300
             motorJoint.connectedBody = spheres[0];
 

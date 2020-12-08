@@ -44,7 +44,8 @@ export default class Check extends cc.Component {
         this.checkRecord.hasCheck = true;
         CheckHelper.instance.saveLocalCheck(this.checkRecord.serialDay);
         PlayerHelper.instance.addCoins(this.checkRecord.coin)
-        this.updateCheckList()
+        this.updateCheckList();
+        this.node.parent.getComponent('start').updateCheck()
 
     }
     updateCheckList(){

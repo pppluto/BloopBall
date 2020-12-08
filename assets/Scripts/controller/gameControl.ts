@@ -40,14 +40,6 @@ export default class GameControl extends cc.Component {
     @property(cc.Node)
     mainWorld: cc.Node = null;
 
-    //scene relate
-    @property(cc.Node)
-    gameBoard: cc.Node = null
-    @property(cc.Label)
-    gameHint: cc.Label = null
-    @property(cc.Node)
-    restartBtn: cc.Node = null
-    
     @property(cc.Prefab)
     motorBall: cc.Prefab = null
     //camera
@@ -70,13 +62,15 @@ export default class GameControl extends cc.Component {
         // let {AIRange,highAINum} = PlayerHelper.instance.matchAI();
         // let [low,high] = AIRange;
 
+        PlayerHelper.instance.setup()
+
         this.ctx.lineCap = cc.Graphics.LineCap.ROUND;
-        this.gameBoard.active = false;
+        // this.gameBoard.active = false;
 
         cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, this.onKeyDown, this);
         cc.systemEvent.on(cc.SystemEvent.EventType['TOUCH_START'], this.onTouchStart, this);
         this.prepareBalls();
-        return
+        // return
         this.scheduleOnce(() => {
             this.startGame();
             const phyMgr = cc.director.getPhysicsManager();
@@ -115,28 +109,37 @@ export default class GameControl extends cc.Component {
             bControl.startGame();
         })
     }
-    playerWin(isAI){
-        console.log('****',isAI ? 'AI finish' :'player finish');
+    playerWin(ballControl){
+        console.log('****',ballControl.isAI ? 'AI finish' :'player finish');
         if(this.playerFinish) return;
-        if(isAI && !this.playerFinish) {
+        if(ballControl.isAI && !this.playerFinish) {
             this.playerRank +=1;
         } else {
           this.showBoard()
         }
     }
     showBoard(){
+        let sortBalls = this.balls.slice().sort((a,b) => {
+            return a.x - b.x;
+        })
+        let roleRankResult = sortBalls.map((b) => {
+            let bc = b.getComponent('ballControl');
+            return {
+                role: bc.role,
+                seq: bc.playerSeq
+            }
+        })
         let wjs = this.mainWorld.getComponent('mainWorld');
         wjs.playerFinish = true;
         this.playerFinish = true;
-        this.gameBoard.active = true;
-        this.gameHint.string = `您获得第${this.playerRank}名`;
+      
+        Global.lastGameResult = {
+            ballRankList: roleRankResult,
+            userSeq: this.playerIndex,
+            playerRank: this.playerRank
+        };
 
-        let rankName = PlayerHelper.instance.getUserRankName()
-        PlayerHelper.instance.updateUserRecordByRank(this.playerRank);
-        let newRankName = PlayerHelper.instance.getUserRankName();
-        if(rankName !== newRankName){
-            this.gameHint.string += `\n段位升级${rankName} -> ${newRankName}`
-        }
+        cc.director.loadScene('Result');
 
     }
     restart(){
@@ -180,15 +183,20 @@ export default class GameControl extends cc.Component {
         // let zoneConfig = ZoneMapping[Global.zoneUsed.name];
         // let roleIds = zoneConfig.avaliableRoleIds.filter(i => i !== userUsedRole.id);
 
-        let userUsedRoleSkin = userUsedRole ? RoleSkinMapping[userUsedRole.name] :  RoleSkinMapping['spider'];
         for (let index = 0; index < player_num; index++) {
             let player = cc.instantiate(this.motorBall);
             let ball = player.getComponent('motorBall');
             //先确定位置，不然初始化时，会因为堆在一起产生碰撞效果
             ball.initWithPosition(cc.v2( xPosition + (index + 1) * 100, yPosition ));
 
+            let role = userUsedRole;
+            if(userIndex === index) {
+                role = userUsedRole;
+            }
+            let roleSkin =  RoleSkinMapping[role.name]
+
             let isAI = index !==  userIndex;
-            let RoleSKinConfig = userUsedRoleSkin;
+            let RoleSKinConfig = roleSkin;
             ball.RoleSKinConfig = RoleSKinConfig
             this.mainWorld.addChild(player);
             ball.enableContact = true;
@@ -196,10 +204,12 @@ export default class GameControl extends cc.Component {
             ball.prepare()
             
             let bControl = player.getComponent('ballControl')
+            bControl.role = role;
+            bControl.playerSeq = index;
             bControl.gameCtr = this;
             bControl.isAI = isAI;
             bControl.AILevel = index;
-            bControl.skillConfig = SkillMapping[userUsedRole.defaultSkillName];
+            bControl.skillConfig = SkillMapping[role.defaultSkillName];
             this.balls.push(player);
             bControl.init();
 
