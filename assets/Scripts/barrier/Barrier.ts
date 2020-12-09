@@ -35,18 +35,6 @@ export enum BarrierType {
     NEGTIVE,
     NEUTRAL,
 }
-
-export interface BarrierEffect{
-    duration?: number //s
-    type: BarrierEffectType,
-    impulse?: cc.Vec2,
-    damping?: number
-}
-export interface Barrier{
-    name: string,
-    type: BarrierType
-}
-
 export enum BarrierPriority{
     NONE,
     VERYLOW = 1 <<1,
@@ -54,6 +42,23 @@ export enum BarrierPriority{
     HIGH = 1 << 3,
     VERYHIGH = 1 << 4
 }
+export interface BarrierEffect{
+    duration?: number //s
+    type: BarrierEffectType,
+    impulse?: cc.Vec2,
+    damping?: number
+}
+/**
+ * summary
+ */
+export interface Barrier{
+    name: string,
+    type: BarrierType
+}
+
+/**
+ * detail
+ */
 export interface BarrierConfig{
     name:string,
     bundleName: string,
