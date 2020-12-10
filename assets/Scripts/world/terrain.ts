@@ -11,10 +11,10 @@ cc.game.on(cc.game.EVENT_ENGINE_INITED, () => {
 
 });
 
-var smooth = require('../experiment/smooth');
-
-import {TerrainConfig} from './terrainMapping'
+import {TerrainConfig,TerrainList,BOTTOM_HEIGHT,PIXEL_STEP} from './terrainMapping'
 const {ccclass, property} = cc._decorator;
+
+//底座高度
 
 @ccclass
 export default class Terrain extends cc.Component {
@@ -45,29 +45,72 @@ export default class Terrain extends cc.Component {
 
         let material = <cc.Material>cc.assetManager.builtins.getBuiltin('material', 'builtin-unlit');
         this.meshRender.setMaterial(0,material)
-        this.mulBase(3);
-
+        let terrainConfig = TerrainList[1];
+        this.updateTerrain(terrainConfig);
     }
 
-    mulBase(mul){
+    updateTerrain(terrainConfig:TerrainConfig){
         //FIX 只有平台连接块能这样设置
-        let cNode = this.terrainNode.getChildByName('terrainJoint');
-        if(cNode){
-            this.node.width *= mul;
-            let boxC = cNode.getComponent(cc.PhysicsPolygonCollider);
-            let newPoints = boxC.points.map((v) => {
-                return cc.v2(v.x * mul,v.y)
-            });
-            boxC.points = newPoints
-            boxC.apply();
-        }
+        let polyCollider = this.terrainNode.addComponent(cc.PhysicsPolygonCollider);
+        let controlPoints = terrainConfig.controlPoints;
+        //加上底座高度
+        let basedControlPoints = controlPoints.map(v => v.add(cc.v2(0,BOTTOM_HEIGHT)));
+        let lastControlP = basedControlPoints[basedControlPoints.length - 1]
+        this.node.width = lastControlP.x;
+        
+        let points = this.getPolyPoints(basedControlPoints,terrainConfig.isBox);
+        polyCollider.points = points
+        polyCollider.apply();
         if(!this.spriteFrame) return;
 
+        this.drawMesh()
+    
+    }
+    getPolyPoints(controlPoints,isBox){
+        let lastPoint = controlPoints[controlPoints.length-1]
+        let bottomLP = cc.v2(0,0);
+        let bottomRP = cc.v2(lastPoint.x,0);
+        let polyPoints = [bottomLP,bottomRP];
+
+        
+        let topPoints = [];
+        if(isBox) {
+            topPoints = controlPoints.reverse();
+            polyPoints = polyPoints.concat(topPoints);
+
+            return polyPoints;
+        }
+        if(controlPoints.length < 2) return;
+
+        for (let index = 0; index < controlPoints.length - 1; index++) {
+            let startP = controlPoints[index];
+            let nextP = controlPoints[index + 1];
+            
+            let yOffset = nextP.y - startP.y;
+            let xOffset = nextP.x - startP.x;
+            let pieces = Math.floor(xOffset / PIXEL_STEP);
+            if(pieces < 3) {
+                topPoints.unshift(startP);
+                continue;
+            } 
+
+            for (let j = 0; j < pieces; j++) {
+                let yStepH = (yOffset - yOffset*Math.cos(Math.PI/pieces*j)) / 2;
+                let p = startP.add(cc.v2(j * PIXEL_STEP,yStepH));
+                topPoints.unshift(p);
+            }
+        }
+        topPoints.unshift(lastPoint);
+        polyPoints = polyPoints.concat(topPoints);
+
+        return polyPoints;
+    }
+    drawMesh(){
         let {vertices,indices,uvs} = this.calcVerties()
         this.updateMesh(vertices,indices,uvs);
     }
     getMeshPoints(){
-        let cNode = this.terrainNode.children[0]
+        let cNode = this.terrainNode;
         let polyPoints = cNode.getComponent(cc.PhysicsPolygonCollider).points;
         let meshPoints = polyPoints.filter(v => v.y !== 0).sort((a,b) => a.x - b.x);
         let newPoints = [];
@@ -121,8 +164,9 @@ export default class Terrain extends cc.Component {
             let b2 = index*2 + 3;
             indices = indices.concat([a1,b1,a2,b1,a2,b2]);
         }
-        let texWidth =  texture.width;
-        let texHeight = texture.height;
+        let texWidth =  texture.width * 4;
+        let texHeight = texture.height * 4;
+
         let uvs = vertices.map((v,index) => {
             let isTop = index % 2 !== 0;
             let width = v.x + this.node.x;
@@ -192,25 +236,10 @@ export default class Terrain extends cc.Component {
         // }
         // ctx.stroke();
 
-        // return;
-        // var result = smooth( points );
-        // var firstControlPoints = result[0];
-        // var secondControlPoints = result[1];
-
-        for (let i = 1, len = points.length; i < len; i++) {
-            // var firstControlPoint = firstControlPoints[i - 1],
-            //     secondControlPoint = secondControlPoints[i - 1];
-
-            
-            // ctx.bezierCurveTo(
-            //     firstControlPoint.x, firstControlPoint.y,
-            //     secondControlPoint.x, secondControlPoint.y,
-            //     points[i].x, points[i].y
-            // );
+        for (let i = 1, len = points.length; i < len; i++) { 
             ctx.lineTo(points[i].x, points[i].y);
         }
 
-        // ctx.close();
         ctx.stroke();
     }
     update (dt) {
